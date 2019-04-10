@@ -1,10 +1,9 @@
 # Fixrbot Product Pitch
-## Overview
-**Fixrbot** is a GitHub App that analyses the API usage patterns. It leverages our existing programming pattern-mining tool [BigGroum](https://github.com/cuplv/biggroum).
+Imagine if you have a tool that learns from hundreds of other programmers' code. Our product, Fixrbot, mines the programming usage patterns of hundreds of open-source projects on Github and identifies potential misuse in your code. 
 
-Fixrbot is easy to set up. The plan is to make the bot available on the GitHub Marketplace. To use the Fixrbot, install it for a Github project, and it should start working automatically without any further settings.
+Fixrbot is easy to set up. We plan to make the bot available on the GitHub Marketplace. To use the Fixrbot, install it for a Github project, and it should start working automatically without any further settings.
 
-Whenever a push or pull request happens, Fixrbot analyze the program and alert developers on potential misuse of an API usage pattern. Fixrbot will try to make pull requests to fix the issues
+Whenever a push or pull request happens, Fixrbot analyze the program and alert developers on potential misuse of an API usage pattern. Fixrbot will try to make pull requests to fix the issues.
 
 ## Questions
 Q: How to customize the bot's behavior on my repository?
