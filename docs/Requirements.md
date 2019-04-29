@@ -14,9 +14,3 @@ The tool will also put a comment on the pull request page like other continuous 
 ## User Interaction
 #### Apply/suppress the fixes
 Users can apply the fixes by merging pull requests. Also, close pull requests will suppress the warning.
-
-## Milestones
-### Milestone 1 : Project Setup
-- Github App that reacts to push and pull request
-- Unit test, CI
-- Deployment
