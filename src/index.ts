@@ -33,7 +33,7 @@ function markdown_from_groums(groums: Array<Groum>): string {
     let comment: string = '';
     for (let i = 0; i < groums.length; ++i) {
         const groum = groums[i];
-        comment += i + '. ';
+        comment += (i + 1) + '. ';
         comment += `**[${groum.source_class_name}]** `;
         comment += `Incomplete pattern inside \`${groum.method_name}\` method\n`;
     }
@@ -81,5 +81,9 @@ export = (app: Application) => {
                     context.github.issues.createComment(comment);
                 });
             });
+    });
+
+    app.on('issue_comment', async (context) => {
+        console.log(context);
     });
 }
