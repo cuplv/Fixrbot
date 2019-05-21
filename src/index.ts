@@ -1,4 +1,6 @@
 import { Application } from 'probot';
+import { stringLiteral } from '@babel/types';
+import { inspect } from 'util';
 const fetch = require('node-fetch');
 
 const bot_name = 'fixrbotJasmineTest';
@@ -16,6 +18,31 @@ interface Groum { groum_key: string,
    class_name: string,
    source_class_name: string,
    method_name: string
+}
+
+type Inspect = { method_id: number };
+type Comment = { body: string };
+type FixrbotCommand = Inspect | Comment;
+
+function parse_command(cmd: string): FixrbotCommand | undefined {
+    const strs = cmd.split(" ");
+    if (strs[0] != "fixrbot") {
+        return undefined;
+    }
+
+    switch(strs[1]) {
+        case 'inspect': {
+            const method_id = parseInt(strs[2]);
+            // TODO: proper error handling
+            const command: Inspect = { method_id };
+            return command;
+        }
+        default: {
+            const comment: Comment = { body: `Fixrbot cannot understand command ${strs[1]}\n` };
+            return comment;
+        }
+    }
+
 }
 
 function find_repository(apps: Array<App>, owner: string, name: string): App {
@@ -84,6 +111,11 @@ export = (app: Application) => {
     });
 
     app.on('issue_comment', async (context) => {
-        console.log(context);
+        const body: string = context.payload.comment.body;
+        const command = parse_command(body);
+        if (<Inspect>command) {
+            const method_id = (<Inspect>command).method_id;
+            console.log(`Inspect method ${method_id}`);
+        }
     });
 }
