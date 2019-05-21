@@ -3,8 +3,8 @@ import nock from 'nock';
 import myProbotApp from '../src';
 import { Probot } from 'probot';
 // Requiring our fixtures
-import payload from './fixtures/issues.opened.json';
-const issueCreatedBody = { body: 'Thanks for opening this issue!' };
+const payload = require('./fixtures/pull_request.opened.json');
+// const issueCreatedBody = { body: 'Thanks for opening this issue!' };
 
 nock.disableNetConnect()
 
@@ -20,6 +20,7 @@ describe('My Probot app', () => {
         app.app = () => 'test';
     });
 
+    /*
     test('creates a comment when an issue is opened', async (done) => {
         // Test that we correctly return a test token
         nock('https://api.github.com')
@@ -37,4 +38,16 @@ describe('My Probot app', () => {
         // Receive a webhook event
         await probot.receive({ name: 'issues', payload });
     });
+    */
+   test('creates a pull request', async (done) => {
+       // Test that we correctly return a test token
+       //nock('https://api.github.com')
+       //.post('/app/installations/2/access_tokens')
+       //.reply(200, { token: 'test' });
+
+       // Test something
+
+        // Receive a webhook event
+        await probot.receive({ name: 'pull_request', payload });
+   })
 });
