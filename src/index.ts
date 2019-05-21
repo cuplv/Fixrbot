@@ -1,4 +1,6 @@
 import { Application } from 'probot';
+import { stringLiteral } from '@babel/types';
+import { inspect } from 'util';
 const fetch = require('node-fetch');
 
 const bot_name = 'fixrbotJasmineTest';
@@ -18,6 +20,31 @@ interface Groum { groum_key: string,
    method_name: string
 }
 
+type Inspect = { method_id: number };
+type Comment = { body: string };
+type FixrbotCommand = Inspect | Comment;
+
+function parse_command(cmd: string): FixrbotCommand | undefined {
+    const strs = cmd.split(" ");
+    if (strs[0] != "fixrbot") {
+        return undefined;
+    }
+
+    switch(strs[1]) {
+        case 'inspect': {
+            const method_id = parseInt(strs[2]);
+            // TODO: proper error handling
+            const command: Inspect = { method_id };
+            return command;
+        }
+        default: {
+            const comment: Comment = { body: `Fixrbot cannot understand command ${strs[1]}\n` };
+            return comment;
+        }
+    }
+
+}
+
 function find_repository(apps: Array<App>, owner: string, name: string): App {
     const app = apps.find((app: App) => {
         return app.repo_name == name;
@@ -33,7 +60,7 @@ function markdown_from_groums(groums: Array<Groum>): string {
     let comment: string = '';
     for (let i = 0; i < groums.length; ++i) {
         const groum = groums[i];
-        comment += i + '. ';
+        comment += (i + 1) + '. ';
         comment += `**[${groum.source_class_name}]** `;
         comment += `Incomplete pattern inside \`${groum.method_name}\` method\n`;
     }
@@ -81,5 +108,14 @@ export = (app: Application) => {
                     context.github.issues.createComment(comment);
                 });
             });
+    });
+
+    app.on('issue_comment', async (context) => {
+        const body: string = context.payload.comment.body;
+        const command = parse_command(body);
+        if (<Inspect>command) {
+            const method_id = (<Inspect>command).method_id;
+            console.log(`Inspect method ${method_id}`);
+        }
     });
 }
