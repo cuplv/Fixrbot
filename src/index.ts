@@ -20,9 +20,26 @@ interface Groum { groum_key: string,
    method_name: string
 }
 
-type Inspect = { method_id: number };
-type Comment = { body: string };
-type FixrbotCommand = Inspect | Comment;
+interface Pattern {
+    search_results: any[],
+    method_names: string[]
+}
+
+interface Example {
+    example_code: string,
+    user: string,
+    repo: string,
+    commit_hash: string,
+    file_name: string,
+    start_line_number: number,
+    end_line_number: number
+}
+
+type Inspect = { tag: 'inspect', anomaly_number: number };
+type Comment = { tag: 'comment', body: string };
+type ShowPattern = { tag: 'pattern' };
+type ShowExamples = { tag: 'example', max_number?: number };
+type FixrbotCommand = Inspect | Comment | ShowPattern | ShowExamples;
 
 function parse_command(cmd: string): FixrbotCommand | undefined {
     const strs = cmd.split(" ");
@@ -32,13 +49,29 @@ function parse_command(cmd: string): FixrbotCommand | undefined {
 
     switch(strs[1]) {
         case 'inspect': {
-            const method_id = parseInt(strs[2]);
+            const anomaly_number = parseInt(strs[2]);
             // TODO: proper error handling
-            const command: Inspect = { method_id };
+            const command: Inspect = { tag: 'inspect', anomaly_number: anomaly_number };
             return command;
         }
+        case 'pattern': {
+            const command: ShowPattern = { tag: 'pattern' };
+            return command;
+        }
+        case 'examples': {
+            if (strs[2]) {
+                const max_number = parseInt(strs[2]);
+                const command: ShowExamples = { tag: 'example', max_number };
+                return command;
+            }
+            else {
+                const command: ShowExamples = { tag: 'example' };
+                return command;
+            }
+
+        }
         default: {
-            const comment: Comment = { body: `Fixrbot cannot understand command ${strs[1]}\n` };
+            const comment: Comment = { tag: 'comment', body: `Fixrbot cannot understand command ${strs[1]}\n` };
             return comment;
         }
     }
@@ -56,7 +89,7 @@ function find_repository(apps: Array<App>, owner: string, name: string): App {
     }
 }
 
-function markdown_from_groums(groums: Array<Groum>): string {
+function make_anomalies_msg(groums: Array<Groum>): string {
     let comment: string = '';
     for (let i = 0; i < groums.length; ++i) {
         const groum = groums[i];
@@ -67,6 +100,19 @@ function markdown_from_groums(groums: Array<Groum>): string {
     comment += '\n';
     comment += 'Comment \`fixrbot inspect <index of the method>\` to get detailed information about each method.\n';
     return comment;
+}
+
+function make_inspect_msg(method_name: string, anomaly_number: number,
+    object_name: string, missing_method_name: string): string {
+    return `> fixrbot inspect ${anomaly_number}
+
+Mismatch pattern in method \`${method_name}\`: Potential missing \`${object_name}.${missing_method_name}()\` method
+
+Interactions:
+
+* \`fixrbot pattern\`: Gets the detailed information of the pattern
+* \`fixrbot examples\`: Gets the example code of the pattern
+`;
 }
 
 export = (app: Application) => {
@@ -100,10 +146,20 @@ export = (app: Application) => {
                 })
                 .then((res: { json: () => void }) => res.json())
                 .then((groums: Array<Groum>) => {
-                    // TODO: How to find the interesting groums
-                    const interesting_groums = [ groums[0], groums[1] ];
+                    const anomalies = [ ];
+
+                    const userListMethod = groums.find((groum) => {
+                        return groum.method_name == 'userList';
+                    });
+
+                    if (userListMethod) {
+                        anomalies.push(userListMethod);
+                    }
+                    anomalies.push(groums[0]);
+                    anomalies.push(groums[1]);
+
                     const comment = context.issue({
-                        body: markdown_from_groums(interesting_groums)
+                        body: make_anomalies_msg(anomalies)
                     });
                     context.github.issues.createComment(comment);
                 });
@@ -111,11 +167,128 @@ export = (app: Application) => {
     });
 
     app.on('issue_comment', async (context) => {
+        if (context.payload.action != 'created') {
+            return;
+        }
+
+        const pull_number: number = context.payload.issue.number;
+
+        const repo = context.payload.repository;
+        const repo_owner: string = repo.owner.login;
+        const repo_name: string = repo.name;
+
+
+        const pull_request_respond = await context.github.pullRequests.get({
+            owner: repo_owner,
+            repo: repo_name,
+            number: pull_number,
+        });
+
+        const pull_request = pull_request_respond.data;
+        const commit_id: string = pull_request.head.sha;
+
         const body: string = context.payload.comment.body;
         const command = parse_command(body);
-        if (<Inspect>command) {
-            const method_id = (<Inspect>command).method_id;
-            console.log(`Inspect method ${method_id}`);
+        if ((<Inspect>command).tag == 'inspect') {
+            const anomaly_number = (<Inspect>command).anomaly_number;
+            //TODO: harcoded now instead of get_groums, waiting for anomaly method, then use REST API again
+            // const groum_key = 'DevelopFreedom/logmein-android/418b37ffbafac3502b661d0918d1bc190e3c2dd1/org.developfreedom.logmein.DatabaseEngine.userList/95';
+            const method_name = 'userList';
+            const object_name = 'cursor';
+            const missing_method_name = 'close';
+
+            const markdown = make_inspect_msg(method_name,
+                anomaly_number, object_name, missing_method_name);
+
+            context.github.pullRequests.createComment({
+                owner: repo_owner,
+                repo: repo_name,
+                number: pull_number,
+                body: markdown,
+                commit_id: commit_id,
+                path: 'app/src/main/java/org/developfreedom/logmein/DatabaseEngine.java',
+                position: 3,
+            });
+
+        } 
+    });
+
+    app.on('pull_request_review_comment', async (context) => {
+        if (context.payload.action != 'created') {
+            return;
         }
+
+        const repo = context.payload.repository;
+        const repo_owner: string = repo.owner.login;
+        const repo_name: string = repo.name;
+
+        const comment_id: number = context.payload.comment.id;
+
+        const pull_request = context.payload.pull_request;
+        const pull_number: number = pull_request.number;
+
+        const body: string =  context.payload.comment.body;
+        const command = parse_command(body);
+        if ((<ShowPattern>command).tag == 'pattern') {
+            const body= "Show pattern code here!";
+            context.github.pullRequests.createCommentReply({
+                owner: repo_owner,
+                repo: repo_name,
+                number: pull_number,
+                body: body,
+                in_reply_to: comment_id
+            });
+        }
+        else if ((<ShowExamples>command).tag == 'example') {
+            const example_code: string = `@Override
+            public void bindView(View view, Context context, Cursor cursor) {
+                Holder holder = (Holder)view.getTag();
+                int position = cursor.getPosition();
+                holder.textView.setText(String.valueOf(position));
+                
+                holder.progress.setVisibility(View.VISIBLE);
+                holder.view.setVisibility(View.INVISIBLE); //TODO: look into if this causes flicker
+                
+                String path = cursor.getString(cursor.getColumnIndex(Images.Media.DATA));
+                System.out.println(path);
+                /*
+                 * The secret sauce
+                 */
+    //			holder.params.file = path;
+    //			holder.params.position = position;
+                Log.d("Cache", "Binding: pos: " + position + "    >="+mListView.getFirstVisiblePosition()  + "    <="+mListView.getLastVisiblePosition());
+    
+                mAsyncLoader.load(position, path, holder);
+            }`
+            const test_example: Example = {
+                example_code: example_code,
+                user: 'kaze0',
+                repo: 'async-loader',
+                commit_hash: '94f4c5e658d0d2027f645869ce1a8af066bb7b64',
+                file_name: 'src/com/mikedg/android/asynclist/example/ExampleSimpleCachedImageCursorAdapter.java',
+                start_line_number: 44,
+                end_line_number: 63
+            };
+
+            const examples = [ test_example ];
+            let markdown = '';
+            for (let i = 0; i < examples.length; ++i) {
+                const example = examples[i];
+                const path = `https://github.com/${example.user}/${example.repo}/blob/${example.commit_hash}/${example.file_name}#L${example.start_line_number}-L${example.end_line_number}`;
+                markdown += `${i + 1}. **${example.user}/${example.repo}/**[${example.file_name}](${path})\n`;
+                markdown += '\n```java\n' + example.example_code + '\n```\n';    
+            }
+
+            context.github.pullRequests.createCommentReply({
+                owner: repo_owner,
+                repo: repo_name,
+                number: pull_number,
+                body: markdown,
+                in_reply_to: comment_id
+            });
+
+        }
+        
+
     });
 }
