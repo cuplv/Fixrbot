@@ -108,6 +108,36 @@ function make_inspect_msg(method_name: string, anomaly_number: number,
 
 Mismatch pattern in method \`${method_name}\`: Potential missing \`${object_name}.${missing_method_name}()\` method
 
+\`\`\`diff
+@@ -91,23 +91,26 @@
+/**
+ * List of all the users in database
+ * @return ArrayList
+ */
+public ArrayList<String> userList() {
+    ArrayList<String> user_list = new ArrayList<String>();
+    try {
+        mDatabase = mMyDatabaseHelper.getReadableDatabase();
+        String[] columns = new String[]{DatabaseOpenHelper.USERNAME, DatabaseOpenHelper.PASSWORD};
+        cursor = mDatabase.query(DatabaseOpenHelper.TABLE, columns, null, null, null, null, null);
+
+        while (cursor.moveToNext()) {
+            user_list.add(cursor.getString(cursor.getColumnIndex(DatabaseOpenHelper.USERNAME)));
+        }
++++ // Insert cursor.close() in the following area {
++++ // cursor.close();
++++ // }
+        mDatabase.close();
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    Log.i("DE", "User List:");
+    Log.i("DE", user_list.toString());
+
+    return user_list;
+}
+\`\`\`
+
 Interactions:
 
 * \`fixrbot pattern\`: Gets the detailed information of the pattern
@@ -230,7 +260,17 @@ export = (app: Application) => {
         const body: string =  context.payload.comment.body;
         const command = parse_command(body);
         if ((<ShowPattern>command).tag == 'pattern') {
-            const body= "Show pattern code here!";
+            const body= `\nMethods called in pattern:
+
+\`\`\`java
+cursor.close(),
+cursor.getCount(),
+cursor.getInt(), 
+cursor.getString(), 
+cursor.moveToFirst(), 
+mMyDatabaseHelper.close(), 
+mDatabase.rawQuery()
+\`\`\``;
             context.github.pullRequests.createCommentReply({
                 owner: repo_owner,
                 repo: repo_name,
@@ -241,25 +281,25 @@ export = (app: Application) => {
         }
         else if ((<ShowExamples>command).tag == 'example') {
             const example_code: string = `@Override
-            public void bindView(View view, Context context, Cursor cursor) {
-                Holder holder = (Holder)view.getTag();
-                int position = cursor.getPosition();
-                holder.textView.setText(String.valueOf(position));
-                
-                holder.progress.setVisibility(View.VISIBLE);
-                holder.view.setVisibility(View.INVISIBLE); //TODO: look into if this causes flicker
-                
-                String path = cursor.getString(cursor.getColumnIndex(Images.Media.DATA));
-                System.out.println(path);
-                /*
-                 * The secret sauce
-                 */
-    //			holder.params.file = path;
-    //			holder.params.position = position;
-                Log.d("Cache", "Binding: pos: " + position + "    >="+mListView.getFirstVisiblePosition()  + "    <="+mListView.getLastVisiblePosition());
+public void bindView(View view, Context context, Cursor cursor) {
+    Holder holder = (Holder)view.getTag();
+    int position = cursor.getPosition();
+    holder.textView.setText(String.valueOf(position));
     
-                mAsyncLoader.load(position, path, holder);
-            }`
+    holder.progress.setVisibility(View.VISIBLE);
+    holder.view.setVisibility(View.INVISIBLE); //TODO: look into if this causes flicker
+    
+    String path = cursor.getString(cursor.getColumnIndex(Images.Media.DATA));
+    System.out.println(path);
+    /*
+     * The secret sauce
+     */
+//		holder.params.file = path;
+//		holder.params.position = position;
+    Log.d("Cache", "Binding: pos: " + position + "    >="+mListView.getFirstVisiblePosition()  + "    <="+mListView.getLastVisiblePosition());
+
+    mAsyncLoader.load(position, path, holder);
+}`
             const test_example: Example = {
                 example_code: example_code,
                 user: 'kaze0',
