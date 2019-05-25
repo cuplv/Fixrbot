@@ -104,11 +104,7 @@ function make_anomalies_msg(groums: Array<Groum>): string {
 
 function make_inspect_msg(method_name: string, anomaly_number: number,
     object_name: string, missing_method_name: string): string {
-    return `> fixrbot inspect ${anomaly_number}
-
-Mismatch pattern in method \`${method_name}\`: Potential missing \`${object_name}.${missing_method_name}()\` method
-
-\`\`\`diff
+    return `\`\`\`diff
 @@ -91,23 +91,26 @@
 /**
  * List of all the users in database
@@ -259,6 +255,32 @@ export = (app: Application) => {
 
         const body: string =  context.payload.comment.body;
         const command = parse_command(body);
+
+        let original_comment: string = await (async () => {
+            let reply_to_id: number = context.payload.comment.in_reply_to_id;
+            while (true) {
+                const reply_to = await context.github.pullRequests.getComment({
+                    owner: repo_owner,
+                    repo: repo_name,
+                    //number: pull_number,
+                    comment_id: reply_to_id
+                });
+                if (reply_to.data.in_reply_to_id) {
+                    reply_to_id = reply_to.data.in_reply_to_id;
+                } else {
+                    return reply_to.data.body;
+                }
+            }
+        })();
+
+        const regex = /> fixrbot inspect ([\d]+)/g;
+        const matches = regex.exec(original_comment);
+        if (!matches) {
+            throw new Error("Cannot match `fixrbot inspect` from the comment fixrbot grab");
+        }
+        const method_number: number = parseInt(matches[1]);
+        console.log(`Method number ${method_number}`);
+        
         if ((<ShowPattern>command).tag == 'pattern') {
             const body= `\nMethods called in pattern:
 
