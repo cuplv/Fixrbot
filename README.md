@@ -15,3 +15,5 @@ npm run build
 # Run the bot
 npm start
 ```
+## Deployment
+The deployment of the bot follows the process discussed in [Deployment | Probot](https://probot.github.io/docs/deployment/).
