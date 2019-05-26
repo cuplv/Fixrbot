@@ -1,6 +1,7 @@
 import { Application } from 'probot';
 import { stringLiteral } from '@babel/types';
 import { inspect } from 'util';
+import { GitHubAPI } from 'probot/lib/github';
 const fetch = require('node-fetch');
 
 const bot_name = 'fixrbotJasmineTest';
@@ -141,6 +142,89 @@ Interactions:
 `;
 }
 
+async function get_original_comment(owner: string, repo: string, payload: any, github: GitHubAPI) {
+        let reply_to_id: number = payload.comment.in_reply_to_id;
+        while (true) {
+            const reply_to = await github.pullRequests.getComment({
+                owner: owner,
+                repo: repo,
+                comment_id: reply_to_id
+            });
+            if (reply_to.data.in_reply_to_id) {
+                reply_to_id = reply_to.data.in_reply_to_id;
+            } else {
+                return reply_to.data.body;
+            }
+        }
+}
+
+function reply_to_comment(repo_owner: string, repo_name: string, pull_number: number, reply_to_id: number, body: string, github: GitHubAPI) {
+    github.pullRequests.createCommentReply({
+        owner: repo_owner,
+        repo: repo_name,
+        number: pull_number,
+        body: body,
+        in_reply_to: reply_to_id
+    });
+}
+
+function get_pattern() {
+    return `\nMethods called in pattern:
+
+\`\`\`java
+cursor.close(),
+cursor.getCount(),
+cursor.getInt(), 
+cursor.getString(), 
+cursor.moveToFirst(), 
+mMyDatabaseHelper.close(), 
+mDatabase.rawQuery()
+\`\`\``;
+}
+
+function show_examples() {
+    const example_code: string = `@Override
+public void bindView(View view, Context context, Cursor cursor) {
+    Holder holder = (Holder)view.getTag();
+    int position = cursor.getPosition();
+    holder.textView.setText(String.valueOf(position));
+    
+    holder.progress.setVisibility(View.VISIBLE);
+    holder.view.setVisibility(View.INVISIBLE); //TODO: look into if this causes flicker
+    
+    String path = cursor.getString(cursor.getColumnIndex(Images.Media.DATA));
+    System.out.println(path);
+    /*
+     * The secret sauce
+     */
+//		holder.params.file = path;
+//		holder.params.position = position;
+    Log.d("Cache", "Binding: pos: " + position + "    >="+mListView.getFirstVisiblePosition()  + "    <="+mListView.getLastVisiblePosition());
+
+    mAsyncLoader.load(position, path, holder);
+}`
+    const test_example: Example = {
+        example_code: example_code,
+        user: 'kaze0',
+        repo: 'async-loader',
+        commit_hash: '94f4c5e658d0d2027f645869ce1a8af066bb7b64',
+        file_name: 'src/com/mikedg/android/asynclist/example/ExampleSimpleCachedImageCursorAdapter.java',
+        start_line_number: 44,
+        end_line_number: 63
+    };
+
+    const examples = [ test_example ];
+    let markdown = '';
+    for (let i = 0; i < examples.length; ++i) {
+        const example = examples[i];
+        const path = `https://github.com/${example.user}/${example.repo}/blob/${example.commit_hash}/${example.file_name}#L${example.start_line_number}-L${example.end_line_number}`;
+        markdown += `${i + 1}. **${example.user}/${example.repo}/**[${example.file_name}](${path})\n`;
+        markdown += '\n```java\n' + example.example_code + '\n```\n';    
+    }
+
+    return markdown;
+}
+
 export = (app: Application) => {
     app.on('pull_request', async (context) => {
         const pull_number: number = context.payload.pull_request.number;
@@ -256,22 +340,9 @@ export = (app: Application) => {
         const body: string =  context.payload.comment.body;
         const command = parse_command(body);
 
-        let original_comment: string = await (async () => {
-            let reply_to_id: number = context.payload.comment.in_reply_to_id;
-            while (true) {
-                const reply_to = await context.github.pullRequests.getComment({
-                    owner: repo_owner,
-                    repo: repo_name,
-                    //number: pull_number,
-                    comment_id: reply_to_id
-                });
-                if (reply_to.data.in_reply_to_id) {
-                    reply_to_id = reply_to.data.in_reply_to_id;
-                } else {
-                    return reply_to.data.body;
-                }
-            }
-        })();
+        const original_comment: string = await get_original_comment(repo_owner, repo_name,
+            context.payload, context.github);
+
 
         const regex = /> fixrbot inspect ([\d]+)/g;
         const matches = regex.exec(original_comment);
@@ -280,77 +351,16 @@ export = (app: Application) => {
         }
         const method_number: number = parseInt(matches[1]);
         console.log(`Method number ${method_number}`);
+
         
         if ((<ShowPattern>command).tag == 'pattern') {
-            const body= `\nMethods called in pattern:
-
-\`\`\`java
-cursor.close(),
-cursor.getCount(),
-cursor.getInt(), 
-cursor.getString(), 
-cursor.moveToFirst(), 
-mMyDatabaseHelper.close(), 
-mDatabase.rawQuery()
-\`\`\``;
-            context.github.pullRequests.createCommentReply({
-                owner: repo_owner,
-                repo: repo_name,
-                number: pull_number,
-                body: body,
-                in_reply_to: comment_id
-            });
+            const pattern = get_pattern();
+            reply_to_comment(repo_owner, repo_name, pull_number, comment_id, pattern, context.github);
         }
         else if ((<ShowExamples>command).tag == 'example') {
-            const example_code: string = `@Override
-public void bindView(View view, Context context, Cursor cursor) {
-    Holder holder = (Holder)view.getTag();
-    int position = cursor.getPosition();
-    holder.textView.setText(String.valueOf(position));
-    
-    holder.progress.setVisibility(View.VISIBLE);
-    holder.view.setVisibility(View.INVISIBLE); //TODO: look into if this causes flicker
-    
-    String path = cursor.getString(cursor.getColumnIndex(Images.Media.DATA));
-    System.out.println(path);
-    /*
-     * The secret sauce
-     */
-//		holder.params.file = path;
-//		holder.params.position = position;
-    Log.d("Cache", "Binding: pos: " + position + "    >="+mListView.getFirstVisiblePosition()  + "    <="+mListView.getLastVisiblePosition());
-
-    mAsyncLoader.load(position, path, holder);
-}`
-            const test_example: Example = {
-                example_code: example_code,
-                user: 'kaze0',
-                repo: 'async-loader',
-                commit_hash: '94f4c5e658d0d2027f645869ce1a8af066bb7b64',
-                file_name: 'src/com/mikedg/android/asynclist/example/ExampleSimpleCachedImageCursorAdapter.java',
-                start_line_number: 44,
-                end_line_number: 63
-            };
-
-            const examples = [ test_example ];
-            let markdown = '';
-            for (let i = 0; i < examples.length; ++i) {
-                const example = examples[i];
-                const path = `https://github.com/${example.user}/${example.repo}/blob/${example.commit_hash}/${example.file_name}#L${example.start_line_number}-L${example.end_line_number}`;
-                markdown += `${i + 1}. **${example.user}/${example.repo}/**[${example.file_name}](${path})\n`;
-                markdown += '\n```java\n' + example.example_code + '\n```\n';    
-            }
-
-            context.github.pullRequests.createCommentReply({
-                owner: repo_owner,
-                repo: repo_name,
-                number: pull_number,
-                body: markdown,
-                in_reply_to: comment_id
-            });
+            const examples = show_examples();
+            reply_to_comment(repo_owner, repo_name, pull_number, comment_id, examples, context.github);
 
         }
-        
-
     });
 }
