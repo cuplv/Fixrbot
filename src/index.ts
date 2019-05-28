@@ -392,6 +392,7 @@ export = (app: Application) => {
         const repo_name: string = repo.name;
 
         const comment_id: number = context.payload.comment.id;
+        let reply_to_id: number = context.payload.comment.in_reply_to_id
 
         const pull_request = context.payload.pull_request;
         const pull_number: number = pull_request.number;
@@ -413,15 +414,15 @@ export = (app: Application) => {
 
         if ((<Inspect>command).tag == 'inspect') {
             const body = 'Fixrbot cannot switch methods, did you mean \`pattern\` or \`examples\`?\n';
-            reply_to_comment(repo_owner, repo_name, pull_number, comment_id, body, context.github);
+            reply_to_comment(repo_owner, repo_name, pull_number, reply_to_id, body, context.github);
         }
         else if ((<ShowPattern>command).tag == 'pattern') {
             const pattern = get_pattern();
-            reply_to_comment(repo_owner, repo_name, pull_number, comment_id, pattern, context.github);
+            reply_to_comment(repo_owner, repo_name, pull_number, reply_to_id, pattern, context.github);
         }
         else if ((<ShowExamples>command).tag == 'example') {
             const examples = show_examples();
-            reply_to_comment(repo_owner, repo_name, pull_number, comment_id, examples, context.github);
+            reply_to_comment(repo_owner, repo_name, pull_number, reply_to_id, examples, context.github);
 
         }; 
     });
