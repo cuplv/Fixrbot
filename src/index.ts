@@ -53,13 +53,16 @@ type FixrbotCommand = Inspect | Comment | ShowPattern | ShowExamples;
 function parse_command(cmd: string): FixrbotCommand | undefined {
     const strs = cmd.split(" ");
     if (strs[0] != "fixrbot") { //user has made a comment that is not meant for fixrbot, ignore
-        return undefined; //TODO: create comment reply asking if command meant for fixrbot
+        return undefined;
     }
 
     switch(strs[1]) {
         case 'inspect': {
             const anomaly_number = parseInt(strs[2]);
-            // TODO: proper error handling -  must be int
+            if (isNaN(anomaly_number)) {
+                const comment: Comment = { tag: 'comment', body: `Fixrbot cannot understand command ${strs[2]}\nInspect command must specify valid number.\n` };
+                return comment;
+            }
             const command: Inspect = { tag: 'inspect', anomaly_number: anomaly_number };
             return command;
         }
@@ -69,7 +72,11 @@ function parse_command(cmd: string): FixrbotCommand | undefined {
         }
         case 'examples': {
             if (strs[2]) {
-                const max_number = parseInt(strs[2]); //TODO error handling
+                const max_number = parseInt(strs[2]); 
+                if (isNaN(max_number)) {
+                    const comment: Comment = { tag: 'comment', body: `Fixrbot cannot understand command ${strs[2]}\nOptional max number must specify valid number.\n` };
+                    return comment;
+                }
                 const command: ShowExamples = { tag: 'example', max_number };
                 return command;
             }
@@ -319,6 +326,7 @@ export = (app: Application) => {
         }
 
         const pull_number: number = context.payload.issue.number;
+        const comment_id: number = context.payload.comment.id;
 
         const repo = context.payload.repository;
         const repo_owner: string = repo.owner.login;
@@ -357,7 +365,16 @@ export = (app: Application) => {
                 position: 3,
             });
 
-        } 
+        } else if ((<ShowPattern>command).tag == 'pattern') {
+            const body = "Fixrbot expects \`inspect\` command before \`pattern\` command\n";
+            reply_to_comment(repo_owner, repo_name, pull_number, comment_id, body, context.github);
+        } else if ((<ShowExamples>command).tag == 'example') {
+            const body = "Fixrbot expects \`inspect\` command before \`examples\` command\n";
+            reply_to_comment(repo_owner, repo_name, pull_number, comment_id, body, context.github);
+        } else if ((<Comment>command).tag == 'comment') {
+            const body = (<Comment>command).body
+            reply_to_comment(repo_owner, repo_name, pull_number, comment_id, body, context.github);
+        }
     });
 
     //react to user review comment
@@ -390,8 +407,11 @@ export = (app: Application) => {
         const method_number: number = parseInt(matches[1]);
         //console.log(`Method number ${method_number}`);
 
-        
-        if ((<ShowPattern>command).tag == 'pattern') {
+        if ((<Inspect>command).tag == 'inspect') {
+            const body = 'Fixrbot cannot switch methods, did you mean \`pattern\` or \`examples\`?\n';
+            reply_to_comment(repo_owner, repo_name, pull_number, comment_id, body, context.github);
+        }
+        else if ((<ShowPattern>command).tag == 'pattern') {
             const pattern = get_pattern();
             reply_to_comment(repo_owner, repo_name, pull_number, comment_id, pattern, context.github);
         }
