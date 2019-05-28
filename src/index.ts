@@ -200,6 +200,18 @@ function reply_to_comment(repo_owner: string, repo_name: string, pull_number: nu
     });
 }
 
+function create_new_comment(repo_owner: string, repo_name: string, pull_number: number, commit_id: string, body: string, github: GitHubAPI){
+    github.pullRequests.createComment({
+        owner: repo_owner,
+        repo: repo_name,
+        number: pull_number,
+        body: body,
+        commit_id: commit_id,
+        path: 'app/src/main/java/org/developfreedom/logmein/DatabaseEngine.java',
+        position: 3,
+    });
+}
+
 //creates string specifying pattern
 //preconditions: none currently TODO: integrate with backend, needs to be passed methods
 //postconditions: returns string specifying pattern
@@ -355,26 +367,18 @@ export = (app: Application) => {
             const markdown = make_inspect_msg(method_name,
                 anomaly_number, object_name, missing_method_name);
 
-            context.github.pullRequests.createComment({
-                owner: repo_owner,
-                repo: repo_name,
-                number: pull_number,
-                body: markdown,
-                commit_id: commit_id,
-                path: 'app/src/main/java/org/developfreedom/logmein/DatabaseEngine.java',
-                position: 3,
-            });
+            create_new_comment(repo_owner, repo_name, pull_number, commit_id, markdown, context.github)
 
         } else if ((<ShowPattern>command).tag == 'pattern') {
         const body = "Fixrbot expects \`inspect\` command before \`pattern\` command\n";
-            reply_to_comment(repo_owner, repo_name, pull_number, comment_id, body, context.github);
+            create_new_comment(repo_owner, repo_name, pull_number, commit_id, body, context.github);
         } else if ((<ShowExamples>command).tag == 'example') {
             const body = "Fixrbot expects \`inspect\` command before \`examples\` command\n";
-            reply_to_comment(repo_owner, repo_name, pull_number, comment_id, body, context.github);
+            create_new_comment(repo_owner, repo_name, pull_number, commit_id, body, context.github);
         } else if ((<Comment>command).tag == 'comment') {
             const body = (<Comment>command).body
-            reply_to_comment(repo_owner, repo_name, pull_number, comment_id, body, context.github);
-        }
+            create_new_comment(repo_owner, repo_name, pull_number, commit_id, body, context.github);
+        };
     });
 
     //react to user review comment
@@ -405,7 +409,7 @@ export = (app: Application) => {
             throw new Error("Cannot match `fixrbot inspect` from the comment fixrbot grab");
         }
         const method_number: number = parseInt(matches[1]);
-        //console.log(`Method number ${method_number}`);
+        console.log(`Method number ${method_number}`);
 
         if ((<Inspect>command).tag == 'inspect') {
             const body = 'Fixrbot cannot switch methods, did you mean \`pattern\` or \`examples\`?\n';
@@ -419,6 +423,6 @@ export = (app: Application) => {
             const examples = show_examples();
             reply_to_comment(repo_owner, repo_name, pull_number, comment_id, examples, context.github);
 
-        }
+        }; 
     });
 }
