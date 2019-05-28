@@ -6,6 +6,7 @@ const fetch = require('node-fetch');
 
 const bot_name = 'fixrbotJasmineTest';
 
+//user application for analysis
 interface App {
     url: string,
     user_name: string,
@@ -13,6 +14,8 @@ interface App {
     repo_name: string
 }
 
+//groums produced by backend
+//TODO: use anomaly list once method is available
 interface Groum { groum_key: string,
    method_line_number: number,
    package_name: string,
@@ -21,11 +24,13 @@ interface Groum { groum_key: string,
    method_name: string
 }
 
+//patterns produced by backend
 interface Pattern {
     search_results: any[],
     method_names: string[]
 }
 
+//examples produced by backend
 interface Example {
     example_code: string,
     user: string,
@@ -36,22 +41,25 @@ interface Example {
     end_line_number: number
 }
 
+//types specified here to use with fixrbot commands
 type Inspect = { tag: 'inspect', anomaly_number: number };
 type Comment = { tag: 'comment', body: string };
 type ShowPattern = { tag: 'pattern' };
 type ShowExamples = { tag: 'example', max_number?: number };
 type FixrbotCommand = Inspect | Comment | ShowPattern | ShowExamples;
 
+//preconditions: takes a command string, extracts the exact command
+//postconditions: return a command type as specified above
 function parse_command(cmd: string): FixrbotCommand | undefined {
     const strs = cmd.split(" ");
-    if (strs[0] != "fixrbot") {
-        return undefined;
+    if (strs[0] != "fixrbot") { //user has made a comment that is not meant for fixrbot, ignore
+        return undefined; //TODO: create comment reply asking if command meant for fixrbot
     }
 
     switch(strs[1]) {
         case 'inspect': {
             const anomaly_number = parseInt(strs[2]);
-            // TODO: proper error handling
+            // TODO: proper error handling -  must be int
             const command: Inspect = { tag: 'inspect', anomaly_number: anomaly_number };
             return command;
         }
@@ -61,7 +69,7 @@ function parse_command(cmd: string): FixrbotCommand | undefined {
         }
         case 'examples': {
             if (strs[2]) {
-                const max_number = parseInt(strs[2]);
+                const max_number = parseInt(strs[2]); //TODO error handling
                 const command: ShowExamples = { tag: 'example', max_number };
                 return command;
             }
@@ -72,13 +80,15 @@ function parse_command(cmd: string): FixrbotCommand | undefined {
 
         }
         default: {
-            const comment: Comment = { tag: 'comment', body: `Fixrbot cannot understand command ${strs[1]}\n` };
+            const comment: Comment = { tag: 'comment', body: `Fixrbot cannot understand command ${strs[1]}\nCommands use the form \`fixrbot\` followed by \`inspect\`, \`pattern\`, or \`examples {optional: max number}\`\n` };
             return comment;
         }
     }
 
 }
 
+//preconditions: takes list of apps, plus owner and string names to locate
+//postconditions: returns proper app
 function find_repository(apps: Array<App>, owner: string, name: string): App {
     const app = apps.find((app: App) => {
         return app.repo_name == name;
@@ -90,6 +100,9 @@ function find_repository(apps: Array<App>, owner: string, name: string): App {
     }
 }
 
+//precondtions: currently takes list of groums, later will take list of anomalies
+//postconditions: returns comment string message specifying list of methods user 
+//might want to inspect
 function make_anomalies_msg(groums: Array<Groum>): string {
     let comment: string = '';
     for (let i = 0; i < groums.length; ++i) {
@@ -103,6 +116,10 @@ function make_anomalies_msg(groums: Array<Groum>): string {
     return comment;
 }
 
+//preconditions: takes string specifying method name, number specifying anomaly number, string
+//specifying object name, and string specifying missing method name
+//postconditions: currently returns unchanging string
+//TODO: make this dynamic based on diff provided by backend
 function make_inspect_msg(method_name: string, anomaly_number: number,
     object_name: string, missing_method_name: string): string {
     return `\`\`\`diff
@@ -142,6 +159,10 @@ Interactions:
 `;
 }
 
+//loops through comments to find initial method/anomaly number
+//preconditions: takes strings specifying owner and repo, plus payload and github API object
+//postconditions: returns body of original comment to extract method/anomaly number to pass
+//to backend
 async function get_original_comment(owner: string, repo: string, payload: any, github: GitHubAPI) {
         let reply_to_id: number = payload.comment.in_reply_to_id;
         while (true) {
@@ -158,6 +179,10 @@ async function get_original_comment(owner: string, repo: string, payload: any, g
         }
 }
 
+//creates comment reply
+//preconditions: takes strings specifying owner, repo, and body, number specifying pull number and
+//reply_to_id, and github API object
+//postconditions: returns nothing, creates comment
 function reply_to_comment(repo_owner: string, repo_name: string, pull_number: number, reply_to_id: number, body: string, github: GitHubAPI) {
     github.pullRequests.createCommentReply({
         owner: repo_owner,
@@ -168,6 +193,9 @@ function reply_to_comment(repo_owner: string, repo_name: string, pull_number: nu
     });
 }
 
+//creates string specifying pattern
+//preconditions: none currently TODO: integrate with backend, needs to be passed methods
+//postconditions: returns string specifying pattern
 function get_pattern() {
     return `\nMethods called in pattern:
 
@@ -182,6 +210,10 @@ mDatabase.rawQuery()
 \`\`\``;
 }
 
+//creates string specifying examples
+//preconditions: none currently TODO: integrate with backend, needs to be passed everything found in
+//Example type field
+//postconditions: returns string listing examples
 function show_examples() {
     const example_code: string = `@Override
 public void bindView(View view, Context context, Cursor cursor) {
@@ -225,6 +257,7 @@ public void bindView(View view, Context context, Cursor cursor) {
     return markdown;
 }
 
+//main function of bot
 export = (app: Application) => {
     app.on('pull_request', async (context) => {
         const pull_number: number = context.payload.pull_request.number;
@@ -241,6 +274,9 @@ export = (app: Application) => {
 
         const commit_hashes = commits.data.map(commit => commit.sha);
  
+        //extract groums from backend
+        //TODO: change from localhost once backend deployed, extract anomalies rather than
+        //groums once method is available
         fetch('http://localhost:30072/get_apps', {
         method: 'get',
         headers: { 'Content-Type': 'application/json' },
@@ -276,6 +312,7 @@ export = (app: Application) => {
             });
     });
 
+    //react to user comment
     app.on('issue_comment', async (context) => {
         if (context.payload.action != 'created') {
             return;
@@ -301,7 +338,7 @@ export = (app: Application) => {
         const command = parse_command(body);
         if ((<Inspect>command).tag == 'inspect') {
             const anomaly_number = (<Inspect>command).anomaly_number;
-            //TODO: harcoded now instead of get_groums, waiting for anomaly method, then use REST API again
+            //TODO: harcoded now instead of using method get_groums, waiting for anomaly method, then use REST API again
             // const groum_key = 'DevelopFreedom/logmein-android/418b37ffbafac3502b661d0918d1bc190e3c2dd1/org.developfreedom.logmein.DatabaseEngine.userList/95';
             const method_name = 'userList';
             const object_name = 'cursor';
@@ -323,6 +360,7 @@ export = (app: Application) => {
         } 
     });
 
+    //react to user review comment
     app.on('pull_request_review_comment', async (context) => {
         if (context.payload.action != 'created') {
             return;
@@ -350,7 +388,7 @@ export = (app: Application) => {
             throw new Error("Cannot match `fixrbot inspect` from the comment fixrbot grab");
         }
         const method_number: number = parseInt(matches[1]);
-        console.log(`Method number ${method_number}`);
+        //console.log(`Method number ${method_number}`);
 
         
         if ((<ShowPattern>command).tag == 'pattern') {
