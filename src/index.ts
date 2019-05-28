@@ -366,7 +366,7 @@ export = (app: Application) => {
             });
 
         } else if ((<ShowPattern>command).tag == 'pattern') {
-            const body = "Fixrbot expects \`inspect\` command before \`pattern\` command\n";
+        const body = "Fixrbot expects \`inspect\` command before \`pattern\` command\n";
             reply_to_comment(repo_owner, repo_name, pull_number, comment_id, body, context.github);
         } else if ((<ShowExamples>command).tag == 'example') {
             const body = "Fixrbot expects \`inspect\` command before \`examples\` command\n";
