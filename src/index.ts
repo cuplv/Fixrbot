@@ -184,7 +184,8 @@ Interactions:
 //preconditions: takes strings specifying owner and repo, plus payload and github API object
 //postconditions: returns body of original comment to extract method/anomaly number to pass
 //to backend
-async function get_original_comment(owner: string, repo: string, payload: any, github: GitHubAPI) {
+async function get_original_comment(owner: string, repo: string,
+    payload: any, github: GitHubAPI) {
     let reply_to_id: number = payload.comment.in_reply_to_id;
     while (true) {
         const reply_to = await github.pullRequests.getComment({
@@ -204,7 +205,9 @@ async function get_original_comment(owner: string, repo: string, payload: any, g
 //preconditions: takes strings specifying owner, repo, and body, number specifying pull number and
 //reply_to_id, and github API object
 //postconditions: returns nothing, creates comment
-function reply_to_comment(repo_owner: string, repo_name: string, pull_number: number, reply_to_id: number, body: string, github: GitHubAPI) {
+function reply_to_comment(repo_owner: string, repo_name: string,
+    pull_number: number, reply_to_id: number,
+    body: string, github: GitHubAPI) {
     github.pullRequests.createCommentReply({
         owner: repo_owner,
         repo: repo_name,
@@ -293,7 +296,7 @@ const App = (app: Application) => {
             number: pull_number
         });
 
-        const commit_hashes = commits.data.map(commit => commit.sha);
+        //const commit_hashes = commits.data.map(commit => commit.sha);
 
         //extract groums from backend
         //TODO: change from localhost once backend deployed, extract anomalies rather than

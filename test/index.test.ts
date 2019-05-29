@@ -10,7 +10,40 @@ import payload from './fixtures/pull_request.opened.json';
 import * as fs from 'fs';
 import * as path from 'path';
 
-nock.disableNetConnect()
+nock.disableNetConnect();
+
+const mockMethodNames = ['foo', 'bar', 'baz'];
+
+const mockMethods = [{
+    groum_key: "m1",
+    method_line_number1: 1,
+    package_name: "package",
+    class_name: "Class",
+    source_class_name: "class1",
+    method_name: mockMethodNames[0]
+}, {
+    groum_key: "m2",
+    method_line_number: 2,
+    package_name: "package",
+    class_name: "Class",
+    source_class_name: "sssc",
+    method_name: mockMethodNames[1]
+}, {
+    groum_key: "m3",
+    method_line_number: 3,
+    package_name: "package",
+    class_name: "Class",
+    source_class_name: "sssc",
+    method_name: mockMethodNames[2]
+}];
+
+const pullRequestCommentBody = {
+    body: `1. **[sssc]** Incomplete pattern inside \`${mockMethodNames[0]}\` method
+2. **[sssc]** Incomplete pattern inside \`${mockMethodNames[1]}\` method
+
+Comment \`fixrbot inspect <index of the method>\` to get detailed information about each method.
+`
+};
 
 describe('My Probot app', () => {
     let probot: any;
@@ -38,10 +71,26 @@ describe('My Probot app', () => {
             .reply(200, { token: 'test' });
 
 
-        // Test that a comment is posted
         nock('https://api.github.com')
             .get('/repos/CompBioJasmine/logmein-android/pulls/1/commits', (body: any) => {
-                //done(expect(body).toMatchObject(issueCreatedBody));
+                return true;
+            })
+            .reply(200);
+
+        nock('http://localhost:30072')
+            .get('/get_apps').reply(200, [{
+                url: 'https://github.com/DevelopFreedom/logmein-android',
+                user_name: 'DevelopFreedom',
+                app_key: 1,
+                repo_name: 'logmein-android',
+            }]);
+
+        nock('http://localhost:30072').post('/get_groums').reply(200, mockMethods);
+
+        // Test that a comment is posted
+        nock('https://api.github.com')
+            .post('/repos/CompBioJasmine/logmein-android/issues/1/comments', (body: any) => {
+                done(expect(body).toMatchObject(pullRequestCommentBody));
                 return true;
             })
             .reply(200);
@@ -49,14 +98,5 @@ describe('My Probot app', () => {
 
         // Receive a webhook event
         await probot.receive({ name: 'pull_request', payload });
-    })
-})
-
-// For more information about testing with Jest see:
-// https://facebook.github.io/jest/
-
-// For more information about using TypeScript in your tests, Jest recommends:
-// https://github.com/kulshekhar/ts-jest
-
-// For more information about testing with Nock see:
-// https://github.com/nock/nock
+    });
+});
