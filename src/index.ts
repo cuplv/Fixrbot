@@ -128,8 +128,9 @@ function make_anomalies_msg(groums: Array<Groum>): string {
 //postconditions: currently returns unchanging string
 //TODO: make this dynamic based on diff provided by backend
 function make_inspect_msg(method_name: string, anomaly_number: number,
-    object_name: string, missing_method_name: string): string {
-    return `\`\`\`diff
+    object_name: string, missing_method_name: string, body: string): string {
+    return `> ${body}
+\`\`\`diff
 @@ -91,23 +91,26 @@
 /**
  * List of all the users in database
@@ -338,7 +339,7 @@ export = (app: Application) => {
         }
 
         const pull_number: number = context.payload.issue.number;
-        const comment_id: number = context.payload.comment.id;
+        //const comment_id: number = context.payload.comment.id;
 
         const repo = context.payload.repository;
         const repo_owner: string = repo.owner.login;
@@ -365,7 +366,7 @@ export = (app: Application) => {
             const missing_method_name = 'close';
 
             const markdown = make_inspect_msg(method_name,
-                anomaly_number, object_name, missing_method_name);
+                anomaly_number, object_name, missing_method_name, body);
 
             create_new_comment(repo_owner, repo_name, pull_number, commit_id, markdown, context.github)
 
@@ -391,17 +392,24 @@ export = (app: Application) => {
         const repo_owner: string = repo.owner.login;
         const repo_name: string = repo.name;
 
-        const comment_id: number = context.payload.comment.id;
-        const reply_to_id: number = context.payload.comment.in_reply_to_id
+        //const comment_id: number = context.payload.comment.id;
+        const reply_to_id: number = context.payload.comment.in_reply_to_id;
+
+        //const pull_number: number = context.payload.issue.number;
 
         const pull_request = context.payload.pull_request;
-        const pull_number: number = pull_request.number;
+
+        const commit_id: string = pull_request.head.sha;
+
+       
+        const pull_n: number = pull_request.number;
 
         const body: string =  context.payload.comment.body;
         const command = parse_command(body);
 
         const original_comment: string = await get_original_comment(repo_owner, repo_name,
             context.payload, context.github);
+            console.log(original_comment);
 
 
         const regex = /> fixrbot inspect ([\d]+)/g;
@@ -414,16 +422,18 @@ export = (app: Application) => {
 
         if ((<Inspect>command).tag == 'inspect') {
             const body = 'Fixrbot cannot switch methods, did you mean \`pattern\` or \`examples\`?\n';
-            reply_to_comment(repo_owner, repo_name, pull_number, reply_to_id, body, context.github);
+            reply_to_comment(repo_owner, repo_name, pull_n, reply_to_id, body, context.github);
+            //create_new_comment(repo_owner, repo_name, pull_n, commit_id, body, context.github);
         }
         else if ((<ShowPattern>command).tag == 'pattern') {
             const pattern = get_pattern();
-            reply_to_comment(repo_owner, repo_name, pull_number, reply_to_id, pattern, context.github);
+            reply_to_comment(repo_owner, repo_name, pull_n, reply_to_id, pattern, context.github);
+            //create_new_comment(repo_owner, repo_name, pull_n, commit_id, pattern, context.github);
         }
         else if ((<ShowExamples>command).tag == 'example') {
             const examples = show_examples();
-            reply_to_comment(repo_owner, repo_name, pull_number, reply_to_id, examples, context.github);
-
+            reply_to_comment(repo_owner, repo_name, pull_n, reply_to_id, examples, context.github);
+            //create_new_comment(repo_owner, repo_name, pull_n, commit_id, examples, context.github);
         }; 
     });
 }
