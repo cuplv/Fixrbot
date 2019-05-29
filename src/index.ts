@@ -196,7 +196,7 @@ function reply_to_comment(repo_owner: string, repo_name: string, pull_number: nu
         repo: repo_name,
         number: pull_number,
         body: body,
-        in_reply_to: reply_to_id
+        in_reply_to: reply_to_id,
     });
 }
 
@@ -392,7 +392,7 @@ export = (app: Application) => {
         const repo_name: string = repo.name;
 
         const comment_id: number = context.payload.comment.id;
-        let reply_to_id: number = context.payload.comment.in_reply_to_id
+        const reply_to_id: number = context.payload.comment.in_reply_to_id
 
         const pull_request = context.payload.pull_request;
         const pull_number: number = pull_request.number;
