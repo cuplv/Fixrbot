@@ -1,7 +1,8 @@
 import { Application } from 'probot';
-import { stringLiteral } from '@babel/types';
-import { inspect } from 'util';
+//import { stringLiteral } from '@babel/types';
+//import { inspect } from 'util';
 import { GitHubAPI } from 'probot/lib/github';
+//import { SSL_OP_LEGACY_SERVER_CONNECT } from 'constants';
 const fetch = require('node-fetch');
 
 const bot_name = 'fixrbotJasmineTest';
@@ -201,6 +202,10 @@ function reply_to_comment(repo_owner: string, repo_name: string, pull_number: nu
     });
 }
 
+//creates new comment
+//preconditions: takes strings specifying owner, repo, and body, number specifying pull number and
+//commit_id, and github API object
+//postconditions: returns nothing, creates comment
 function create_new_comment(repo_owner: string, repo_name: string, pull_number: number, commit_id: string, body: string, github: GitHubAPI){
     github.pullRequests.createComment({
         owner: repo_owner,
@@ -422,18 +427,17 @@ export = (app: Application) => {
 
         if ((<Inspect>command).tag == 'inspect') {
             const body = 'Fixrbot cannot switch methods, did you mean \`pattern\` or \`examples\`?\n';
+
             reply_to_comment(repo_owner, repo_name, pull_n, reply_to_id, body, context.github);
-            //create_new_comment(repo_owner, repo_name, pull_n, commit_id, body, context.github);
         }
         else if ((<ShowPattern>command).tag == 'pattern') {
             const pattern = get_pattern();
             reply_to_comment(repo_owner, repo_name, pull_n, reply_to_id, pattern, context.github);
-            //create_new_comment(repo_owner, repo_name, pull_n, commit_id, pattern, context.github);
         }
         else if ((<ShowExamples>command).tag == 'example') {
             const examples = show_examples();
             reply_to_comment(repo_owner, repo_name, pull_n, reply_to_id, examples, context.github);
-            //create_new_comment(repo_owner, repo_name, pull_n, commit_id, examples, context.github);
+
         }; 
     });
 }
