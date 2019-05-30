@@ -38,7 +38,7 @@ const mockMethods = [{
 }];
 
 const pullRequestCommentBody = {
-    body: `1. **[sssc]** Incomplete pattern inside \`${mockMethodNames[0]}\` method
+    body: `1. **[class1]** Incomplete pattern inside \`${mockMethodNames[0]}\` method
 2. **[sssc]** Incomplete pattern inside \`${mockMethodNames[1]}\` method
 
 Comment \`fixrbot inspect <index of the method>\` to get detailed information about each method.
