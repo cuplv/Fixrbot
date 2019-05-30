@@ -4,8 +4,6 @@ import { inspect } from 'util';
 import { GitHubAPI } from 'probot/lib/github';
 const fetch = require('node-fetch');
 
-const bot_name = 'fixrbotJasmineTest';
-
 //user application for analysis
 interface App {
     url: string,
@@ -16,12 +14,13 @@ interface App {
 
 //groums produced by backend
 //TODO: use anomaly list once method is available
-interface Groum { groum_key: string,
-   method_line_number: number,
-   package_name: string,
-   class_name: string,
-   source_class_name: string,
-   method_name: string
+interface Groum {
+    groum_key: string,
+    method_line_number: number,
+    package_name: string,
+    class_name: string,
+    source_class_name: string,
+    method_name: string
 }
 
 //patterns produced by backend
@@ -56,14 +55,20 @@ function parse_command(cmd: string): FixrbotCommand | undefined {
         return undefined;
     }
 
-    switch(strs[1]) {
+    switch (strs[1]) {
         case 'inspect': {
             const anomaly_number = parseInt(strs[2]);
             if (isNaN(anomaly_number)) {
-                const comment: Comment = { tag: 'comment', body: `Fixrbot cannot understand command ${strs[2]}\nInspect command must specify valid number.\n` };
+                const comment: Comment = {
+                    tag: 'comment',
+                    body: `Fixrbot cannot understand command ${strs[2]}\nInspect command must specify valid number.\n`
+                };
                 return comment;
             }
-            const command: Inspect = { tag: 'inspect', anomaly_number: anomaly_number };
+            const command: Inspect = {
+                tag: 'inspect',
+                anomaly_number: anomaly_number
+            };
             return command;
         }
         case 'pattern': {
@@ -72,12 +77,18 @@ function parse_command(cmd: string): FixrbotCommand | undefined {
         }
         case 'examples': {
             if (strs[2]) {
-                const max_number = parseInt(strs[2]); 
+                const max_number = parseInt(strs[2]);
                 if (isNaN(max_number)) {
-                    const comment: Comment = { tag: 'comment', body: `Fixrbot cannot understand command ${strs[2]}\nOptional max number must specify valid number.\n` };
+                    const comment: Comment = {
+                        tag: 'comment',
+                        body: `Fixrbot cannot understand command ${strs[2]}\nOptional max number must specify valid number.\n`
+                    };
                     return comment;
                 }
-                const command: ShowExamples = { tag: 'example', max_number };
+                const command: ShowExamples = {
+                    tag: 'example',
+                    max_number
+                };
                 return command;
             }
             else {
@@ -87,7 +98,10 @@ function parse_command(cmd: string): FixrbotCommand | undefined {
 
         }
         default: {
-            const comment: Comment = { tag: 'comment', body: `Fixrbot cannot understand command ${strs[1]}\nCommands use the form \`fixrbot\` followed by \`inspect\`, \`pattern\`, or \`examples {optional: max number}\`\n` };
+            const comment: Comment = {
+                tag: 'comment',
+                body: `Fixrbot cannot understand command ${strs[1]}\nCommands use the form \`fixrbot\` followed by \`inspect\`, \`pattern\`, or \`examples {optional: max number}\`\n`
+            };
             return comment;
         }
     }
@@ -171,27 +185,30 @@ Interactions:
 //preconditions: takes strings specifying owner and repo, plus payload and github API object
 //postconditions: returns body of original comment to extract method/anomaly number to pass
 //to backend
-async function get_original_comment(owner: string, repo: string, payload: any, github: GitHubAPI) {
-        let reply_to_id: number = payload.comment.in_reply_to_id;
-        while (true) {
-            const reply_to = await github.pullRequests.getComment({
-                owner: owner,
-                repo: repo,
-                comment_id: reply_to_id
-            });
-            if (reply_to.data.in_reply_to_id) {
-                reply_to_id = reply_to.data.in_reply_to_id;
-            } else {
-                return reply_to.data.body;
-            }
+async function get_original_comment(owner: string, repo: string,
+    payload: any, github: GitHubAPI) {
+    let reply_to_id: number = payload.comment.in_reply_to_id;
+    while (true) {
+        const reply_to = await github.pullRequests.getComment({
+            owner: owner,
+            repo: repo,
+            comment_id: reply_to_id
+        });
+        if (reply_to.data.in_reply_to_id) {
+            reply_to_id = reply_to.data.in_reply_to_id;
+        } else {
+            return reply_to.data.body;
         }
+    }
 }
 
 //creates comment reply
 //preconditions: takes strings specifying owner, repo, and body, number specifying pull number and
 //reply_to_id, and github API object
 //postconditions: returns nothing, creates comment
-function reply_to_comment(repo_owner: string, repo_name: string, pull_number: number, reply_to_id: number, body: string, github: GitHubAPI) {
+function reply_to_comment(repo_owner: string, repo_name: string,
+    pull_number: number, reply_to_id: number,
+    body: string, github: GitHubAPI) {
     github.pullRequests.createCommentReply({
         owner: repo_owner,
         repo: repo_name,
@@ -265,20 +282,20 @@ public void bindView(View view, Context context, Cursor cursor) {
         end_line_number: 63
     };
 
-    const examples = [ test_example ];
+    const examples = [test_example];
     let markdown = '';
     for (let i = 0; i < examples.length; ++i) {
         const example = examples[i];
         const path = `https://github.com/${example.user}/${example.repo}/blob/${example.commit_hash}/${example.file_name}#L${example.start_line_number}-L${example.end_line_number}`;
         markdown += `${i + 1}. **${example.user}/${example.repo}/**[${example.file_name}](${path})\n`;
-        markdown += '\n```java\n' + example.example_code + '\n```\n';    
+        markdown += '\n```java\n' + example.example_code + '\n```\n';
     }
 
     return markdown;
 }
 
 //main function of bot
-export = (app: Application) => {
+const App = (app: Application) => {
     app.on('pull_request', async (context) => {
         const pull_number: number = context.payload.pull_request.number;
 
@@ -292,15 +309,15 @@ export = (app: Application) => {
             number: pull_number
         });
 
-        const commit_hashes = commits.data.map(commit => commit.sha);
- 
+        //const commit_hashes = commits.data.map(commit => commit.sha);
+
         //extract groums from backend
         //TODO: change from localhost once backend deployed, extract anomalies rather than
         //groums once method is available
         fetch('http://localhost:30072/get_apps', {
-        method: 'get',
-        headers: { 'Content-Type': 'application/json' },
-            })
+            method: 'get',
+            headers: { 'Content-Type': 'application/json' },
+        })
             .then((res: { json: () => void }) => res.json())
             .then((apps: Array<App>) => {
                 const app = find_repository(apps, repo_owner, repo_name);
@@ -310,25 +327,25 @@ export = (app: Application) => {
                     body: JSON.stringify(body),
                     headers: { 'Content-Type': 'application/json' },
                 })
-                .then((res: { json: () => void }) => res.json())
-                .then((groums: Array<Groum>) => {
-                    const anomalies = [ ];
+                    .then((res: { json: () => void }) => res.json())
+                    .then((groums: Array<Groum>) => {
+                        const anomalies = [];
 
-                    const userListMethod = groums.find((groum) => {
-                        return groum.method_name == 'userList';
+                        const userListMethod = groums.find((groum) => {
+                            return groum.method_name == 'userList';
+                        });
+
+                        if (userListMethod) {
+                            anomalies.push(userListMethod);
+                        }
+                        anomalies.push(groums[0]);
+                        anomalies.push(groums[1]);
+
+                        const comment = context.issue({
+                            body: make_anomalies_msg(anomalies)
+                        });
+                        context.github.issues.createComment(comment);
                     });
-
-                    if (userListMethod) {
-                        anomalies.push(userListMethod);
-                    }
-                    anomalies.push(groums[0]);
-                    anomalies.push(groums[1]);
-
-                    const comment = context.issue({
-                        body: make_anomalies_msg(anomalies)
-                    });
-                    context.github.issues.createComment(comment);
-                });
             });
     });
 
@@ -371,8 +388,10 @@ export = (app: Application) => {
             create_new_comment(repo_owner, repo_name, pull_number, commit_id, markdown, context.github)
 
         } else if ((<ShowPattern>command).tag == 'pattern') {
+
         const body = "Fixrbot expects \`inspect\` command before \`pattern\` command\n";
             create_new_comment(repo_owner, repo_name, pull_number, commit_id, body, context.github);
+
         } else if ((<ShowExamples>command).tag == 'example') {
             const body = "Fixrbot expects \`inspect\` command before \`examples\` command\n";
             create_new_comment(repo_owner, repo_name, pull_number, commit_id, body, context.github);
@@ -404,7 +423,7 @@ export = (app: Application) => {
        
         const pull_n: number = pull_request.number;
 
-        const body: string =  context.payload.comment.body;
+        const body: string = context.payload.comment.body;
         const command = parse_command(body);
 
         const original_comment: string = await get_original_comment(repo_owner, repo_name,
@@ -437,3 +456,5 @@ export = (app: Application) => {
         }; 
     });
 }
+
+export default App;
