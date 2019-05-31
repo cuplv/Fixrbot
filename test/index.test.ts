@@ -63,7 +63,7 @@ describe('My Probot app', () => {
         probot.load(myProbotApp);
     });
 
-    test('creates a comment when an issue is opened', async (done) => {
+    test('testing basic functionality of the bot', async (done) => {
         // Test that we correctly return a test token
 
         nock('https://api.github.com')
@@ -94,6 +94,9 @@ describe('My Probot app', () => {
                 return true;
             })
             .reply(200);
+
+        //test that inspect is correctly called
+        
 
 
         // Receive a webhook event
