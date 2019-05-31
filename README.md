@@ -9,6 +9,11 @@ Fixrbot is a GitHub App that analyses the API usage patterns.
 # Install dependencies
 npm install
 
+#If this doesn't initially install node-fetch and probot, install
+npm install node-fetch
+npm i @types/node
+npm install probot
+
 # Run typescript
 npm run build
 
@@ -16,4 +21,7 @@ npm run build
 npm start
 ```
 ## Deployment
-The deployment of the bot follows the process discussed in [Deployment | Probot](https://probot.github.io/docs/deployment/).
+The bot has been deployed to  https://vast-atoll-23282.herokuapp.com/ with all changes as of May 31 2019.
+
+If you need to redeloy it, the deployment of the bot follows the process discussed in [Deployment | Probot](https://probot.github.io/docs/deployment/).
+These instructions should be sufficient, but if you receive an error trying to deplay that you have both yarn.lock and package-lock.json, you may need to delete it, and if you still have issues, you may need to re-clone the repository. It doesn't currently have a yarn.lock file.
