@@ -11,6 +11,7 @@ npm install
 
 #If this doesn't initially install node-fetch and probot, install
 npm install node-fetch
+npm i @types/node
 npm install probot
 
 # Run typescript
