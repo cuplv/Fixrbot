@@ -9,6 +9,10 @@ Fixrbot is a GitHub App that analyses the API usage patterns.
 # Install dependencies
 npm install
 
+#If this doesn't initially install node-fetch and probot, install
+npm install node-fetch
+npm install probot
+
 # Run typescript
 npm run build
 
