@@ -300,7 +300,7 @@ public void bindView(View view, Context context, Cursor cursor) {
 }
 
 //main function of bot
-const App = (app: Application) => {
+export = (app: Application) => {
     app.on('pull_request', async (context) => {
         const pull_number: number = context.payload.pull_request.number;
 
@@ -460,5 +460,3 @@ const App = (app: Application) => {
         }; 
     });
 }
-
-export default App;
