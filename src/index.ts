@@ -407,7 +407,7 @@ const App = (app: Application) => {
     });
 
     //react to user review comment
-    app.on('pull_request_review_comment', async (context) => {
+    app.on('pull_request_review_comment', async (context: any) => {
         if (context.payload.action != 'created') {
             return;
         }
