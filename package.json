@@ -15,6 +15,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "nodemon --exec \"npm start\"",
+    "postinstall": "npm run build",
     "start": "probot run ./build/index.js",
     "test": "jest",
     "test:watch": "jest --watch --notify --notifyMode=change --coverage"
