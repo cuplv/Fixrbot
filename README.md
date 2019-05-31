@@ -23,5 +23,6 @@ npm start
 ## Deployment
 The bot has been deployed to  https://vast-atoll-23282.herokuapp.com/ with all changes as of May 31 2019.
 
-If you need to redeloy it, the deployment of the bot follows the process discussed in [Deployment | Probot](https://probot.github.io/docs/deployment/).
+If you need to redeploy it, the deployment of the bot follows the process discussed in [Deployment | Probot](https://probot.github.io/docs/deployment/).
 These instructions should be sufficient, but if you receive an error trying to deplay that you have both yarn.lock and package-lock.json, you may need to delete it, and if you still have issues, you may need to re-clone the repository. It doesn't currently have a yarn.lock file.
+You should use a .pem file for your private key.
