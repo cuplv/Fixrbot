@@ -14,6 +14,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "postinstall": "npm run build",
     "dev": "nodemon --exec \"npm start\"",
     "start": "probot run ./build/index.js",
     "test": "jest",
