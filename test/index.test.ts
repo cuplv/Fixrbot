@@ -3,11 +3,13 @@
 
 import nock = require('nock');
 // Requiring our app implementation
-import myProbotApp, {make_inspect_msg, get_pattern, show_examples} from '../src';
+import myProbotApp from '../src';
 import { Probot } from 'probot';
 // Requiring our fixtures
 import * as fs from 'fs';
 import * as path from 'path';
+
+import { Fixrbot } from '../src/helper';
 
 nock.disableNetConnect();
 
@@ -128,7 +130,7 @@ describe('My Probot app', () => {
         // Test that a comment is posted
         nock('https://api.github.com')
             .post('/repos/CompBioJasmine/logmein-android/pulls/1/comments', (body: any) => {
-                const inspectCommentBody = { body: make_inspect_msg(method_name, anomaly_number,
+                const inspectCommentBody = { body: Fixrbot.make_inspect_msg(method_name, anomaly_number,
                     object_name, missing_method_name, message_body) };
                 done(expect(body).toMatchObject(inspectCommentBody));
                 return true;
@@ -148,7 +150,7 @@ describe('My Probot app', () => {
         // Test that a comment is posted
         nock('https://api.github.com')
             .post('/repos/CompBioJasmine/logmein-android/pulls/4/comments', (body: any) => {
-                const patternCommentBody = { body: get_pattern() };
+                const patternCommentBody = { body: Fixrbot.get_pattern() };
                 done(expect(body).toMatchObject(patternCommentBody));
                 return true;
             })
@@ -167,8 +169,26 @@ describe('My Probot app', () => {
         // Test that a comment is posted
         nock('https://api.github.com')
             .post('/repos/CompBioJasmine/logmein-android/pulls/4/comments', (body: any) => {
-                const patternCommentBody = { body: show_examples() };
+                const patternCommentBody = { body: Fixrbot.show_examples() };
                 done(expect(body).toMatchObject(patternCommentBody));
+                return true;
+            })
+            .reply(200);
+
+        // Receive a webhook event
+        await probot.receive({ name: 'pull_request_review_comment', payload });
+    });
+
+    test('testing no command comment', async (done) => {
+        const payload = require('./fixtures/no_command_error.json');
+                
+        pull_request_review_mock();
+
+        // Test that a comment is posted
+        nock('https://api.github.com')
+            .post('/repos/CompBioJasmine/logmein-android/pulls/4/comments', (body: any) => {
+                const noCommandBody = { body: `Fixrbot cannot understand command aaa\nCommands use the form \`fixrbot\` followed by \`inspect\`, \`pattern\`, or \`examples {optional: max number}\`\n` };
+                done(expect(body).toMatchObject(noCommandBody));
                 return true;
             })
             .reply(200);
