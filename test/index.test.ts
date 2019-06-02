@@ -3,7 +3,7 @@
 
 import nock = require('nock');
 // Requiring our app implementation
-import myProbotApp, {make_inspect_msg} from '../src';
+import myProbotApp, {make_inspect_msg, get_pattern, show_examples} from '../src';
 import { Probot } from 'probot';
 // Requiring our fixtures
 import * as fs from 'fs';
@@ -43,6 +43,16 @@ const pullRequestCommentBody = {
 Comment \`fixrbot inspect <index of the method>\` to get detailed information about each method.
 `
 };
+
+function pull_request_review_mock(){
+    const original_comment = '> fixrbot inspect 1';
+                
+        nock('https://api.github.com')
+            .get('/repos/CompBioJasmine/logmein-android/pulls/comments/287429829', (body: any) => {
+                return true;
+            })
+            .reply(200, { body: original_comment });
+}
 
 describe('My Probot app', () => {
     let probot: any;
@@ -128,4 +138,44 @@ describe('My Probot app', () => {
         // Receive a webhook event
         await probot.receive({ name: 'issue_comment', payload });
     });
+
+    test('testing pattern comment', async (done) => {
+        const payload = require('./fixtures/pull_request_review.json');
+                
+        pull_request_review_mock();
+
+
+        // Test that a comment is posted
+        nock('https://api.github.com')
+            .post('/repos/CompBioJasmine/logmein-android/pulls/4/comments', (body: any) => {
+                const patternCommentBody = { body: get_pattern() };
+                done(expect(body).toMatchObject(patternCommentBody));
+                return true;
+            })
+            .reply(200);
+
+        // Receive a webhook event
+        await probot.receive({ name: 'pull_request_review_comment', payload });
+    });
+
+    test('testing examples comment', async (done) => {
+        const payload = require('./fixtures/examples.json');
+                
+        pull_request_review_mock();
+
+
+        // Test that a comment is posted
+        nock('https://api.github.com')
+            .post('/repos/CompBioJasmine/logmein-android/pulls/4/comments', (body: any) => {
+                const patternCommentBody = { body: show_examples() };
+                done(expect(body).toMatchObject(patternCommentBody));
+                return true;
+            })
+            .reply(200);
+
+        // Receive a webhook event
+        await probot.receive({ name: 'pull_request_review_comment', payload });
+    });
+
+    
 });

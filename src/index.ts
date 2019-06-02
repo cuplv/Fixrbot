@@ -238,7 +238,7 @@ function create_new_comment(repo_owner: string, repo_name: string, pull_number: 
 //creates string specifying pattern
 //preconditions: none currently TODO: integrate with backend, needs to be passed methods
 //postconditions: returns string specifying pattern
-function get_pattern() {
+export function get_pattern() {
     return `\nMethods called in pattern:
 
 \`\`\`java
@@ -256,7 +256,7 @@ mDatabase.rawQuery()
 //preconditions: none currently TODO: integrate with backend, needs to be passed everything found in
 //Example type field
 //postconditions: returns string listing examples
-function show_examples() {
+export function show_examples() {
     const example_code: string = `@Override
 public void bindView(View view, Context context, Cursor cursor) {
     Holder holder = (Holder)view.getTag();
@@ -300,7 +300,7 @@ public void bindView(View view, Context context, Cursor cursor) {
 }
 
 //main function of bot
-export = (app: Application) => {
+const myProbotApp = (app: Application) => {
     app.on('pull_request', async (context) => {
         const pull_number: number = context.payload.pull_request.number;
 
@@ -433,8 +433,6 @@ export = (app: Application) => {
 
         const original_comment: string = await get_original_comment(repo_owner, repo_name,
             context.payload, context.github);
-            console.log(original_comment);
-
 
         const regex = /> fixrbot inspect ([\d]+)/g;
         const matches = regex.exec(original_comment);
@@ -460,3 +458,5 @@ export = (app: Application) => {
         }; 
     });
 }
+
+export default myProbotApp;
