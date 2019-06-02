@@ -6,9 +6,10 @@ import nock = require('nock');
 import myProbotApp from '../src';
 import { Probot } from 'probot';
 // Requiring our fixtures
-import payload from './fixtures/pull_request.opened.json';
 import * as fs from 'fs';
 import * as path from 'path';
+
+import { Fixrbot } from '../src/helper';
 
 nock.disableNetConnect();
 
@@ -45,6 +46,16 @@ Comment \`fixrbot inspect <index of the method>\` to get detailed information ab
 `
 };
 
+function pull_request_review_mock(){
+    const original_comment = '> fixrbot inspect 1';
+                
+        nock('https://api.github.com')
+            .get('/repos/CompBioJasmine/logmein-android/pulls/comments/287429829', (body: any) => {
+                return true;
+            })
+            .reply(200, { body: original_comment });
+}
+
 describe('My Probot app', () => {
     let probot: any;
     let mockCert: string;
@@ -61,15 +72,16 @@ describe('My Probot app', () => {
         probot = new Probot({ id: 123, cert: mockCert });
         // Load our app into probot
         probot.load(myProbotApp);
-    });
-
-    test('testing basic functionality of the bot', async (done) => {
-        // Test that we correctly return a test token
 
         nock('https://api.github.com')
-            .post('/app/installations/1010584/access_tokens')
-            .reply(200, { token: 'test' });
+        .post('/app/installations/1010584/access_tokens')
+        .reply(200, { token: 'test' });
+    });
 
+    test('testing pull request', async (done) => {
+        const payload = require('./fixtures/pull_request.opened.json');
+
+        // Test that we correctly return a test token
 
         nock('https://api.github.com')
             .get('/repos/CompBioJasmine/logmein-android/pulls/1/commits', (body: any) => {
@@ -95,11 +107,95 @@ describe('My Probot app', () => {
             })
             .reply(200);
 
-        //test that inspect is correctly called
-        
-
-
         // Receive a webhook event
         await probot.receive({ name: 'pull_request', payload });
     });
+
+    test('testing inspect comment', async (done) => {
+        const payload = require('./fixtures/inspect_comment.json');
+        const commit_sha = '123456';
+        const method_name = 'userList';
+        const anomaly_number = 1;
+        const object_name = 'cursor';
+        const missing_method_name = 'close';
+        const message_body = 'fixrbot inspect 1';
+                
+        nock('https://api.github.com')
+            .get('/repos/CompBioJasmine/logmein-android/pulls/1', (body: any) => {
+                return true;
+            })
+            .reply(200, { head: { sha: commit_sha }});
+
+
+        // Test that a comment is posted
+        nock('https://api.github.com')
+            .post('/repos/CompBioJasmine/logmein-android/pulls/1/comments', (body: any) => {
+                const inspectCommentBody = { body: Fixrbot.make_inspect_msg(method_name, anomaly_number,
+                    object_name, missing_method_name, message_body) };
+                done(expect(body).toMatchObject(inspectCommentBody));
+                return true;
+            })
+            .reply(200);
+
+        // Receive a webhook event
+        await probot.receive({ name: 'issue_comment', payload });
+    });
+
+    test('testing pattern comment', async (done) => {
+        const payload = require('./fixtures/pull_request_review.json');
+                
+        pull_request_review_mock();
+
+
+        // Test that a comment is posted
+        nock('https://api.github.com')
+            .post('/repos/CompBioJasmine/logmein-android/pulls/4/comments', (body: any) => {
+                const patternCommentBody = { body: Fixrbot.get_pattern() };
+                done(expect(body).toMatchObject(patternCommentBody));
+                return true;
+            })
+            .reply(200);
+
+        // Receive a webhook event
+        await probot.receive({ name: 'pull_request_review_comment', payload });
+    });
+
+    test('testing examples comment', async (done) => {
+        const payload = require('./fixtures/examples.json');
+                
+        pull_request_review_mock();
+
+
+        // Test that a comment is posted
+        nock('https://api.github.com')
+            .post('/repos/CompBioJasmine/logmein-android/pulls/4/comments', (body: any) => {
+                const patternCommentBody = { body: Fixrbot.show_examples() };
+                done(expect(body).toMatchObject(patternCommentBody));
+                return true;
+            })
+            .reply(200);
+
+        // Receive a webhook event
+        await probot.receive({ name: 'pull_request_review_comment', payload });
+    });
+
+    test('testing no command comment', async (done) => {
+        const payload = require('./fixtures/no_command_error.json');
+                
+        pull_request_review_mock();
+
+        // Test that a comment is posted
+        nock('https://api.github.com')
+            .post('/repos/CompBioJasmine/logmein-android/pulls/4/comments', (body: any) => {
+                const noCommandBody = { body: `Fixrbot cannot understand command aaa\nCommands use the form \`fixrbot\` followed by \`inspect\`, \`pattern\`, or \`examples {optional: max number}\`\n` };
+                done(expect(body).toMatchObject(noCommandBody));
+                return true;
+            })
+            .reply(200);
+
+        // Receive a webhook event
+        await probot.receive({ name: 'pull_request_review_comment', payload });
+    });
+
+    
 });
