@@ -142,7 +142,7 @@ function make_anomalies_msg(groums: Array<Groum>): string {
 //specifying object name, and string specifying missing method name
 //postconditions: currently returns unchanging string
 //TODO: make this dynamic based on diff provided by backend
-function make_inspect_msg(method_name: string, anomaly_number: number,
+export function make_inspect_msg(method_name: string, anomaly_number: number,
     object_name: string, missing_method_name: string, body: string): string {
     return `> ${body}
 \`\`\`diff
