@@ -300,7 +300,7 @@ public void bindView(View view, Context context, Cursor cursor) {
 }
 
 //main function of bot
-const App = (app: Application) => {
+export = (app: Application) => {
     app.on('pull_request', async (context) => {
         const pull_number: number = context.payload.pull_request.number;
 
@@ -407,7 +407,7 @@ const App = (app: Application) => {
     });
 
     //react to user review comment
-    app.on('pull_request_review_comment', async (context) => {
+    app.on('pull_request_review_comment', async (context: any) => {
         if (context.payload.action != 'created') {
             return;
         }
@@ -460,5 +460,3 @@ const App = (app: Application) => {
         }; 
     });
 }
-
-export default App;
