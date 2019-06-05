@@ -118,6 +118,7 @@ describe('My Probot app', () => {
         const anomaly_number = 1;
         const object_name = 'cursor';
         const missing_method_name = 'close';
+        const line_number = 91;
         const message_body = 'fixrbot inspect 1';
                 
         nock('https://api.github.com')
@@ -131,7 +132,7 @@ describe('My Probot app', () => {
         nock('https://api.github.com')
             .post('/repos/CompBioJasmine/logmein-android/pulls/1/comments', (body: any) => {
                 const inspectCommentBody = { body: Fixrbot.make_inspect_msg(method_name, anomaly_number,
-                    object_name, missing_method_name, message_body) };
+                    object_name, missing_method_name, message_body, line_number) };
                 done(expect(body).toMatchObject(inspectCommentBody));
                 return true;
             })

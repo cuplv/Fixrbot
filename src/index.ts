@@ -22,45 +22,27 @@ export = (app: Application) => {
             number: pull_number
         });
 
-        //const commit_hashes = commits.data.map(commit => commit.sha);
+        const json_body = {"user" : "CompBioJasmine",
+        "repo" : "iSENSE-Hardware",
+        "commitHashes" : ["0700782f9d3aa4cb3d4c86c3ccf9dcab13fa3aad"],
+        "modifiedFiles" : [],
+        "pullRequestId" : 4};
 
-        //extract groums from backend
-        //TODO: change from localhost once backend deployed, extract anomalies rather than
-        //groums once method is available
-        fetch('http://localhost:30072/get_apps', {
-            method: 'get',
+        //extract anomalies from backend
+        fetch('http://localhost:30072/process_graph_in_pull_request', {
+            method: 'post',
             headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(json_body),
         })
             .then((res: { json: () => void }) => res.json())
-            .then((apps: Array<Fixrbot.App>) => {
-                const app = Fixrbot.find_repository(apps, repo_owner, repo_name);
-                const body = { app_key: app.app_key };
-                fetch('http://localhost:30072/get_groums', {
-                    method: 'post',
-                    body: JSON.stringify(body),
-                    headers: { 'Content-Type': 'application/json' },
-                })
-                    .then((res: { json: () => void }) => res.json())
-                    .then((groums: Array<Fixrbot.Groum>) => {
-                        const anomalies = [];
-
-                        const userListMethod = groums.find((groum) => {
-                            return groum.method_name == 'userList';
-                        });
-
-                        if (userListMethod) {
-                            anomalies.push(userListMethod);
-                        }
-                        anomalies.push(groums[0]);
-                        anomalies.push(groums[1]);
-
+            .then((anomalies: Array<Fixrbot.Anomaly>) => {
+                        console.log(anomalies);
                         const comment = context.issue({
                             body: Fixrbot.make_anomalies_msg(anomalies)
                         });
-                        context.github.issues.createComment(comment);
+                        context.github.issues.createComment(comment); 
                     });
             });
-    });
 
     //react to user comment
     app.on('issue_comment', async (context) => {
@@ -94,9 +76,10 @@ export = (app: Application) => {
             const method_name = 'userList';
             const object_name = 'cursor';
             const missing_method_name = 'close';
+            const line_number = 91;
 
             const markdown = Fixrbot.make_inspect_msg(method_name,
-                anomaly_number, object_name, missing_method_name, body);
+                anomaly_number, object_name, missing_method_name, body, line_number);
 
             Fixrbot.create_new_comment(repo_owner, repo_name, pull_number, commit_id, markdown, context.github)
 
