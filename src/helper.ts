@@ -16,7 +16,6 @@ export interface App {
 }
 
 //groums produced by backend
-//TODO: use anomaly list once method is available
 export interface Groum {
     groum_key: string,
     method_line_number: number,
@@ -26,10 +25,21 @@ export interface Groum {
     method_name: string
 }
 
+//anomalies produced by backend
+export interface Anomaly {
+    class_name: string,
+    error: string,
+    file_name: string,
+    pull_request_id: number,
+    method_name: string,
+    package_name: string
+}
+
 //patterns produced by backend
 export interface Pattern {
     search_results: any[],
-    method_names: string[]
+    method_names: string[],
+    line_number: number
 }
 
 //examples produced by backend
@@ -127,13 +137,13 @@ export function find_repository(apps: Array<App>, owner: string, name: string): 
 //precondtions: currently takes list of groums, later will take list of anomalies
 //postconditions: returns comment string message specifying list of methods user 
 //might want to inspect
-export function make_anomalies_msg(groums: Array<Groum>): string {
+export function make_anomalies_msg(anomalies: Array<Anomaly>): string {
     let comment: string = '';
-    for (let i = 0; i < groums.length; ++i) {
-        const groum = groums[i];
+    for (let i = 0; i < anomalies.length; ++i) {
+        const anomaly = anomalies[i];
         comment += (i + 1) + '. ';
-        comment += `**[${groum.source_class_name}]** `;
-        comment += `Incomplete pattern inside \`${groum.method_name}\` method\n`;
+        comment += `**[${anomaly.class_name}]** `;
+        comment += `Incomplete pattern inside \`${anomaly.method_name}\` method\n`;
     }
     comment += '\n';
     comment += 'Comment \`fixrbot inspect <index of the method>\` to get detailed information about each method.\n';
@@ -145,7 +155,7 @@ export function make_anomalies_msg(groums: Array<Groum>): string {
 //postconditions: currently returns unchanging string
 //TODO: make this dynamic based on diff provided by backend
 export function make_inspect_msg(method_name: string, anomaly_number: number,
-    object_name: string, missing_method_name: string, body: string): string {
+    object_name: string, missing_method_name: string, body: string, line_number: number): string {
     return `> ${body}
 \`\`\`diff
 @@ -91,23 +91,26 @@
