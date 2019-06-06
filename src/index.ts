@@ -36,7 +36,7 @@ export = (app: Application) => {
         })
             .then((res: { json: () => void }) => { 
                 console.log(res);
-                res.json();
+                return res.json();
             })
             .then( (anomalies: Array<Fixrbot.Anomaly>) => {
                         console.log(anomalies);
