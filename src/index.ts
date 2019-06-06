@@ -22,11 +22,11 @@ export = (app: Application) => {
             number: pull_number
         });
 
-        const json_body = {"user" : "CompBioJasmine",
+        const json_body = {"user" : "mmcguinn",
         "repo" : "iSENSE-Hardware",
         "commitHashes" : ["0700782f9d3aa4cb3d4c86c3ccf9dcab13fa3aad"],
         "modifiedFiles" : [],
-        "pullRequestId" : 4};
+        "pullRequestId" : 1};
 
         //extract anomalies from backend
         fetch('http://localhost:30072/process_graph_in_pull_request', {
@@ -34,14 +34,20 @@ export = (app: Application) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(json_body),
         })
-            .then((res: { json: () => void }) => res.json())
-            .then((anomalies: Array<Fixrbot.Anomaly>) => {
+            .then((res: { json: () => void }) => { 
+                console.log(res);
+                res.json();
+            })
+            .then( (json: any) => {
+                console.log(json);
+            });
+            /*(anomalies: Array<Fixrbot.Anomaly>) => {
                         console.log(anomalies);
                         const comment = context.issue({
                             body: Fixrbot.make_anomalies_msg(anomalies)
                         });
                         context.github.issues.createComment(comment); 
-                    });
+                    }); */
             });
 
     //react to user comment
@@ -71,7 +77,7 @@ export = (app: Application) => {
         const command = Fixrbot.parse_command(body);
         if ((<Fixrbot.Inspect>command).tag == 'inspect') {
             const anomaly_number = (<Fixrbot.Inspect>command).anomaly_number;
-            //TODO: harcoded now instead of using method get_groums, waiting for anomaly method, then use REST API again
+            //TODO: harcoded now instead of using method inspect_anomaly, waiting for anomaly method, then use REST API again
             // const groum_key = 'DevelopFreedom/logmein-android/418b37ffbafac3502b661d0918d1bc190e3c2dd1/org.developfreedom.logmein.DatabaseEngine.userList/95';
             const method_name = 'userList';
             const object_name = 'cursor';
