@@ -27,12 +27,13 @@ export interface Groum {
 
 //anomalies produced by backend
 export interface Anomaly {
+    method_name: string,
+    package_name: string,
+    file_name: string,
     class_name: string,
     error: string,
-    file_name: string,
-    pull_request_id: number,
-    method_name: string,
-    package_name: string
+    line: number,
+    id: number 
 }
 
 //patterns produced by backend
@@ -59,6 +60,7 @@ export type Comment = { tag: 'comment', body: string };
 export type ShowPattern = { tag: 'pattern' };
 export type ShowExamples = { tag: 'example', max_number?: number };
 export type FixrbotCommand = Inspect | Comment | ShowPattern | ShowExamples;
+
 
 //preconditions: takes a command string, extracts the exact command
 //postconditions: return a command type as specified above

@@ -35,11 +35,11 @@ export = (app: Application) => {
             body: JSON.stringify(json_body),
         })
             .then((res: { json: () => void }) => { 
-                console.log(res);
                 return res.json();
             })
             .then( (anomalies: Array<Fixrbot.Anomaly>) => {
                         console.log(anomalies);
+                        console.log(anomalies[0].class_name);
                         const comment = context.issue({
                             body: Fixrbot.make_anomalies_msg(anomalies)
                         });
