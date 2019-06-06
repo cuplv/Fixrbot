@@ -29,7 +29,7 @@ export = (app: Application) => {
         "pullRequestId" : 1};
 
         //extract anomalies from backend
-        fetch('http://localhost:30072/process_graph_in_pull_request', {
+        fetch('http://localhost:30072/process_graphs_in_pull_request', {
             method: 'post',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(json_body),
@@ -38,16 +38,13 @@ export = (app: Application) => {
                 console.log(res);
                 res.json();
             })
-            .then( (json: any) => {
-                console.log(json);
-            });
-            /*(anomalies: Array<Fixrbot.Anomaly>) => {
+            .then( (anomalies: Array<Fixrbot.Anomaly>) => {
                         console.log(anomalies);
                         const comment = context.issue({
                             body: Fixrbot.make_anomalies_msg(anomalies)
                         });
                         context.github.issues.createComment(comment); 
-                    }); */
+                    }); 
             });
 
     //react to user comment
