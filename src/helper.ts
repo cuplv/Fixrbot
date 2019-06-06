@@ -27,13 +27,20 @@ export interface Groum {
 
 //anomalies produced by backend
 export interface Anomaly {
-    method_name: string,
-    package_name: string,
-    file_name: string,
-    class_name: string,
+    methodName: string,
+    packageName: string,
+    fileName: string,
+    className: string,
     error: string,
     line: number,
     id: number 
+}
+
+//inspect information produced by backend
+export interface InspectInfo {
+    editText: string,
+    fileName: string,
+    lineNumber: number
 }
 
 //patterns produced by backend
@@ -144,8 +151,8 @@ export function make_anomalies_msg(anomalies: Array<Anomaly>): string {
     for (let i = 0; i < anomalies.length; ++i) {
         const anomaly = anomalies[i];
         comment += (i + 1) + '. ';
-        comment += `**[${anomaly.class_name}]** `;
-        comment += `Incomplete pattern inside \`${anomaly.method_name}\` method\n`;
+        comment += `**[${anomaly.className}]** `;
+        comment += `Incomplete pattern inside \`${anomaly.methodName}\` method\n`;
     }
     comment += '\n';
     comment += 'Comment \`fixrbot inspect <index of the method>\` to get detailed information about each method.\n';
@@ -156,37 +163,12 @@ export function make_anomalies_msg(anomalies: Array<Anomaly>): string {
 //specifying object name, and string specifying missing method name
 //postconditions: currently returns unchanging string
 //TODO: make this dynamic based on diff provided by backend
-export function make_inspect_msg(method_name: string, anomaly_number: number,
-    object_name: string, missing_method_name: string, body: string, line_number: number): string {
+export function make_inspect_msg(anomaly_number: number, body: string, editText: string, line_number: number): string {
     return `> ${body}
 \`\`\`diff
-@@ -91,23 +91,26 @@
-/**
- * List of all the users in database
- * @return ArrayList
- */
-public ArrayList<String> userList() {
-    ArrayList<String> user_list = new ArrayList<String>();
-    try {
-        mDatabase = mMyDatabaseHelper.getReadableDatabase();
-        String[] columns = new String[]{DatabaseOpenHelper.USERNAME, DatabaseOpenHelper.PASSWORD};
-        cursor = mDatabase.query(DatabaseOpenHelper.TABLE, columns, null, null, null, null, null);
+@@ ${line_number} @@
 
-        while (cursor.moveToNext()) {
-            user_list.add(cursor.getString(cursor.getColumnIndex(DatabaseOpenHelper.USERNAME)));
-        }
-+++ // Insert cursor.close() in the following area {
-+++ // cursor.close();
-+++ // }
-        mDatabase.close();
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-    Log.i("DE", "User List:");
-    Log.i("DE", user_list.toString());
-
-    return user_list;
-}
+${editText}
 \`\`\`
 
 Interactions:

@@ -6,6 +6,9 @@ import { GitHubAPI } from 'probot/lib/github';
 const fetch = require('node-fetch');
 
 import { Fixrbot } from './helper';
+import { resolve } from 'dns';
+import { ENGINE_METHOD_DIGESTS } from 'constants';
+import { stringify } from 'querystring';
 
 //main function of bot
 export = (app: Application) => {
@@ -38,8 +41,6 @@ export = (app: Application) => {
                 return res.json();
             })
             .then( (anomalies: Array<Fixrbot.Anomaly>) => {
-                        console.log(anomalies);
-                        console.log(anomalies[0].class_name);
                         const comment = context.issue({
                             body: Fixrbot.make_anomalies_msg(anomalies)
                         });
@@ -54,7 +55,6 @@ export = (app: Application) => {
         }
 
         const pull_number: number = context.payload.issue.number;
-        //const comment_id: number = context.payload.comment.id;
 
         const repo = context.payload.repository;
         const repo_owner: string = repo.owner.login;
@@ -68,23 +68,51 @@ export = (app: Application) => {
         });
 
         const pull_request = pull_request_respond.data;
+        const pull_request_id = pull_request_respond.data.number;
         const commit_id: string = pull_request.head.sha;
 
         const body: string = context.payload.comment.body;
         const command = Fixrbot.parse_command(body);
         if ((<Fixrbot.Inspect>command).tag == 'inspect') {
             const anomaly_number = (<Fixrbot.Inspect>command).anomaly_number;
-            //TODO: harcoded now instead of using method inspect_anomaly, waiting for anomaly method, then use REST API again
-            // const groum_key = 'DevelopFreedom/logmein-android/418b37ffbafac3502b661d0918d1bc190e3c2dd1/org.developfreedom.logmein.DatabaseEngine.userList/95';
-            const method_name = 'userList';
-            const object_name = 'cursor';
-            const missing_method_name = 'close';
-            const line_number = 91;
+            
+            const json_body = {"user" : "mmcguinn",
+                        "repo" : "iSENSE-Hardware",
+                        "commitHashes" : ["0700782f9d3aa4cb3d4c86c3ccf9dcab13fa3aad"],
+                        "modifiedFiles" : [],
+                        "pullRequestId" : 1};
 
-            const markdown = Fixrbot.make_inspect_msg(method_name,
-                anomaly_number, object_name, missing_method_name, body, line_number);
-
-            Fixrbot.create_new_comment(repo_owner, repo_name, pull_number, commit_id, markdown, context.github)
+            fetch('http://localhost:30072/process_graphs_in_pull_request', {
+            method: 'post',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(json_body),
+        })
+            .then((res: { json: () => void }) => { 
+                return res.json();
+            })
+            .then( (inspect: Array<Fixrbot.Anomaly>) => {
+                        const desire_anomaly = inspect[anomaly_number];
+                        const service_input = {
+                            //"anomalyId" : desire_anomaly.id,
+                            "anomalyId": 1,
+                            "pullRequest" : {"user" : 'mmcguinn', "repo" : repo_name,
+                                            "id" : 1}
+                                  }
+                        fetch('http://localhost:30072/inspect_anomaly', {
+                            method: 'post',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(service_input),
+                        })
+                            .then((res: { json: () => void }) => { 
+                                console.log(res);
+                                return res.json();
+                            })
+                            .then( (info: Fixrbot.InspectInfo) => {
+                                const markdown = Fixrbot.make_inspect_msg(anomaly_number, body, info.editText, info.lineNumber);
+                                console.log(markdown);
+                                Fixrbot.create_new_comment(repo_owner, repo_name, pull_number, commit_id, markdown, context.github);
+                            });
+                        });
 
         } else if ((<Fixrbot.ShowPattern>command).tag == 'pattern') {
 
