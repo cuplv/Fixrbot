@@ -226,7 +226,7 @@ export function create_new_comment(repo_owner: string, repo_name: string, pull_n
         number: pull_number,
         body: body,
         commit_id: commit_id,
-        path: 'mmcguinn/iSENSE-Hardware/RestAPIDbAdapter.java',
+        path: 'repos/mmcguinn/iSENSE-Hardware/RestAPIDbAdapter.java',
         position: 3,
     });
 }
