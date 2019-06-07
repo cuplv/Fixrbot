@@ -97,7 +97,7 @@ describe('My Probot app', () => {
                 repo_name: 'logmein-android',
             }]);
 
-        nock('http://localhost:30072').post('/get_groums').reply(200, mockMethods);
+        nock('http://localhost:30072').post('/process_graphs_in_pull_request').reply(200, mockMethods);
 
         // Test that a comment is posted
         nock('https://api.github.com')
@@ -120,6 +120,7 @@ describe('My Probot app', () => {
         const missing_method_name = 'close';
         const line_number = 91;
         const message_body = 'fixrbot inspect 1';
+        const editText = 'test string';
                 
         nock('https://api.github.com')
             .get('/repos/CompBioJasmine/logmein-android/pulls/1', (body: any) => {
@@ -131,8 +132,7 @@ describe('My Probot app', () => {
         // Test that a comment is posted
         nock('https://api.github.com')
             .post('/repos/CompBioJasmine/logmein-android/pulls/1/comments', (body: any) => {
-                const inspectCommentBody = { body: Fixrbot.make_inspect_msg(method_name, anomaly_number,
-                    object_name, missing_method_name, message_body, line_number) };
+                const inspectCommentBody = { body: Fixrbot.make_inspect_msg(anomaly_number, message_body, editText, line_number) };
                 done(expect(body).toMatchObject(inspectCommentBody));
                 return true;
             })
