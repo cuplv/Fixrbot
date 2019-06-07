@@ -104,12 +104,16 @@ export = (app: Application) => {
                             body: JSON.stringify(service_input),
                         })
                             .then((res: { json: () => void }) => { 
-                                console.log(res);
                                 return res.json();
                             })
                             .then( (info: Fixrbot.InspectInfo) => {
                                 const markdown = Fixrbot.make_inspect_msg(anomaly_number, body, info.editText, info.lineNumber);
                                 console.log(markdown);
+                                console.log(repo_owner);
+                                console.log(repo_name);
+                                console.log(pull_number);
+                                console.log(pull_request_id);
+                                console.log(commit_id);
                                 Fixrbot.create_new_comment(repo_owner, repo_name, pull_number, commit_id, markdown, context.github);
                             });
                         });

@@ -226,7 +226,7 @@ export function create_new_comment(repo_owner: string, repo_name: string, pull_n
         number: pull_number,
         body: body,
         commit_id: commit_id,
-        path: 'app/src/main/java/org/developfreedom/logmein/DatabaseEngine.java',
+        path: 'mmcguinn/iSENSE-Hardware/RestAPIDbAdapter.java',
         position: 3,
     });
 }
