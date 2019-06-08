@@ -43,6 +43,12 @@ export interface InspectInfo {
     lineNumber: number
 }
 
+//examples information produced by backend
+export interface PatternInfo {
+    patternCode: string,
+    numberOfExamples: number
+}
+
 //patterns produced by backend
 export interface Pattern {
     search_results: any[],
@@ -226,7 +232,7 @@ export function create_new_comment(repo_owner: string, repo_name: string, pull_n
         number: pull_number,
         body: body,
         commit_id: commit_id,
-        path: 'app/src/CompBioJasmine/iSENSE-Hardware/RestAPIDbAdapter.java',
+        path: 'Android/iSenseDataWalk/src/edu/uml/cs/isense/comm/RestAPIDbAdapter.java',
         position: 3,
     });
 }
@@ -234,18 +240,14 @@ export function create_new_comment(repo_owner: string, repo_name: string, pull_n
 //creates string specifying pattern
 //preconditions: none currently TODO: integrate with backend, needs to be passed methods
 //postconditions: returns string specifying pattern
-export function get_pattern() {
-    return `\nMethods called in pattern:
+export function get_pattern(pattern_code: string, num_examples: number) {
+    return `\nPattern:
 
 \`\`\`java
-cursor.close(),
-cursor.getCount(),
-cursor.getInt(), 
-cursor.getString(), 
-cursor.moveToFirst(), 
-mMyDatabaseHelper.close(), 
-mDatabase.rawQuery()
-\`\`\``;
+${pattern_code}
+\`\`\`
+
+Number of examples: ${num_examples}`;
 }
 
 //creates string specifying examples
@@ -270,7 +272,6 @@ public void bindView(View view, Context context, Cursor cursor) {
 //		holder.params.file = path;
 //		holder.params.position = position;
     Log.d("Cache", "Binding: pos: " + position + "    >="+mListView.getFirstVisiblePosition()  + "    <="+mListView.getLastVisiblePosition());
-
     mAsyncLoader.load(position, path, holder);
 }`
     const test_example: Example = {

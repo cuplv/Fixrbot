@@ -108,12 +108,6 @@ export = (app: Application) => {
                             })
                             .then( (info: Fixrbot.InspectInfo) => {
                                 const markdown = Fixrbot.make_inspect_msg(anomaly_number, body, info.editText, info.lineNumber);
-                                console.log(markdown);
-                                console.log(repo_owner);
-                                console.log(repo_name);
-                                console.log(pull_number);
-                                console.log(pull_request_id);
-                                console.log(commit_id);
                                 Fixrbot.create_new_comment(repo_owner, repo_name, pull_number, commit_id, markdown, context.github);
                             });
                         });
@@ -156,7 +150,9 @@ export = (app: Application) => {
 
         const body: string = context.payload.comment.body;
         const command = Fixrbot.parse_command(body);
-
+        if (!command) {
+            return;
+        }
         const original_comment: string = await Fixrbot.get_original_comment(repo_owner, repo_name,
             context.payload, context.github);
 
@@ -168,18 +164,35 @@ export = (app: Application) => {
         const method_number: number = parseInt(matches[1]);
         console.log(`Method number ${method_number}`);
 
+
         if ((<Fixrbot.Inspect>command).tag == 'inspect') {
             const body = 'Fixrbot cannot switch methods, did you mean \`pattern\` or \`examples\`?\n';
 
             Fixrbot.reply_to_comment(repo_owner, repo_name, pull_n, reply_to_id, body, context.github);
         }
         else if ((<Fixrbot.ShowPattern>command).tag == 'pattern') {
-            const pattern = Fixrbot.get_pattern();
-            Fixrbot.reply_to_comment(repo_owner, repo_name, pull_n, reply_to_id, pattern, context.github);
+            const service_input = {
+                "anomalyId" : method_number,
+                "pullRequest" : {"user" : 'mmcguinn', "repo" : repo_name,
+                                 "id" : 1}
+              };
+            fetch('http://localhost:30072/explain_anomaly', {
+                            method: 'post',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(service_input),
+                        })
+                            .then((res: { json: () => void }) => { 
+                                return res.json();
+                            })
+                            .then( (info: Fixrbot.PatternInfo) => {
+                                console.log(info);
+                                const examples = Fixrbot.get_pattern(info.patternCode, info.numberOfExamples);
+                                Fixrbot.reply_to_comment(repo_owner, repo_name, pull_n, reply_to_id, examples, context.github);
+                            });
         }
         else if ((<Fixrbot.ShowExamples>command).tag == 'example') {
             const examples = Fixrbot.show_examples();
-            Fixrbot.reply_to_comment(repo_owner, repo_name, pull_n, reply_to_id, examples, context.github);
+            Fixrbot.reply_to_comment(repo_owner, repo_name, pull_n, reply_to_id, examples, context.github); 
         } else if ((<Fixrbot.Comment>command).tag == 'comment') {
             const body = (<Fixrbot.Comment>command).body
             Fixrbot.reply_to_comment(repo_owner, repo_name, pull_n, reply_to_id, body, context.github);
