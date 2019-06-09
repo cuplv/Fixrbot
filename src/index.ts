@@ -1,14 +1,7 @@
 import { Application } from 'probot';
-//import { stringLiteral } from '@babel/types';
-//import { inspect } from 'util';
-import { GitHubAPI } from 'probot/lib/github';
-//import { SSL_OP_LEGACY_SERVER_CONNECT } from 'constants';
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
 import { Fixrbot } from './helper';
-import { resolve } from 'dns';
-import { ENGINE_METHOD_DIGESTS } from 'constants';
-import { stringify } from 'querystring';
 
 //main function of bot
 export = (app: Application) => {
