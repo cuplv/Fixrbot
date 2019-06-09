@@ -17,6 +17,7 @@
     "postinstall": "npm run build",
     "dev": "nodemon --exec \"npm start\"",
     "start": "probot run ./build/index.js",
+    "lint": "tslint --project .",
     "test": "jest",
     "test:watch": "jest --watch --notify --notifyMode=change --coverage"
   },
@@ -32,18 +33,32 @@
   "devDependencies": {
     "@types/jest": "^24.0.11",
     "@types/node": "^11.13.13",
-    "eslint-plugin-typescript": "^0.14.0",
+    "husky": "^2.4.0",
     "jest": "^24.0.0",
+    "lint-staged": "^8.2.0",
     "nodemon": "^1.19.1",
+    "prettier": "1.18.2",
     "smee-client": "^1.0.2",
     "ts-jest": "^24.0.0",
-    "typescript": "^3.3.1",
-    "typescript-eslint-parser": "^22.0.0"
+    "tslint": "^5.17.0",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.3.1"
   },
   "engines": {
     "node": ">= 8.3.0"
   },
   "jest": {
     "testEnvironment": "node"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{ts,css,json,md}": [
+      "prettier --write",
+      "git add"
+    ]
   }
 }
