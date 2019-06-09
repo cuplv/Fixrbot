@@ -30,15 +30,15 @@ export = (app: Application) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(json_body),
         })
-            .then((res: { json: () => void }) => { 
+            .then((res) => {
                 return res.json();
             })
             .then( (anomalies: Array<Fixrbot.Anomaly>) => {
                         const comment = context.issue({
                             body: Fixrbot.make_anomalies_msg(anomalies)
                         });
-                        context.github.issues.createComment(comment); 
-                    }); 
+                        context.github.issues.createComment(comment);
+                    });
             });
 
     //react to user comment
@@ -68,7 +68,7 @@ export = (app: Application) => {
         const command = Fixrbot.parse_command(body);
         if ((<Fixrbot.Inspect>command).tag == 'inspect') {
             const anomaly_number = (<Fixrbot.Inspect>command).anomaly_number;
-            
+
             const json_body = {"user" : "mmcguinn",
                         "repo" : "iSENSE-Hardware",
                         "commitHashes" : ["0700782f9d3aa4cb3d4c86c3ccf9dcab13fa3aad"],
@@ -80,7 +80,7 @@ export = (app: Application) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(json_body),
         })
-            .then((res: { json: () => void }) => { 
+            .then((res) => {
                 return res.json();
             })
             .then( (inspect: Array<Fixrbot.Anomaly>) => {
@@ -96,7 +96,7 @@ export = (app: Application) => {
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(service_input),
                         })
-                            .then((res: { json: () => void }) => { 
+                            .then((res) => {
                                 return res.json();
                             })
                             .then( (info: Fixrbot.InspectInfo) => {
@@ -138,7 +138,7 @@ export = (app: Application) => {
 
         const commit_id: string = pull_request.head.sha;
 
-       
+
         const pull_n: number = pull_request.number;
 
         const body: string = context.payload.comment.body;
@@ -174,10 +174,10 @@ export = (app: Application) => {
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(service_input),
                         })
-                            .then((res: { json: () => void }) => { 
+                            .then((res) => {
                                 return res.json();
                             })
-                            .then( (info: Fixrbot.PatternInfo) => {
+                            .then((info: Fixrbot.PatternInfo) => {
                                 console.log(info);
                                 const examples = Fixrbot.get_pattern(info.patternCode, info.numberOfExamples);
                                 Fixrbot.reply_to_comment(repo_owner, repo_name, pull_n, reply_to_id, examples, context.github);
@@ -185,7 +185,7 @@ export = (app: Application) => {
         }
         else if ((<Fixrbot.ShowExamples>command).tag == 'example') {
             const examples = Fixrbot.show_examples();
-            Fixrbot.reply_to_comment(repo_owner, repo_name, pull_n, reply_to_id, examples, context.github); 
+            Fixrbot.reply_to_comment(repo_owner, repo_name, pull_n, reply_to_id, examples, context.github);
         } else if ((<Fixrbot.Comment>command).tag == 'comment') {
             const body = (<Fixrbot.Comment>command).body
             Fixrbot.reply_to_comment(repo_owner, repo_name, pull_n, reply_to_id, body, context.github);
