@@ -1,4 +1,4 @@
-import fetch from "node-fetch";
+const fetch = require('node-fetch');
 import { Application } from "probot";
 
 import { Fixrbot } from "./helper";
@@ -32,7 +32,7 @@ export = (app: Application) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(jsonBody)
     })
-      .then(res => {
+      .then((res: { json: () => void; }) => {
         return res.json();
       })
       .then((anomalies: Fixrbot.Anomaly[]) => {
@@ -83,7 +83,7 @@ export = (app: Application) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(jsonBody)
       })
-        .then(res => {
+        .then((res: { json: () => void; }) => {
           return res.json();
         })
         .then((inspect: Fixrbot.Anomaly[]) => {
@@ -98,7 +98,7 @@ export = (app: Application) => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(serviceInput)
           })
-            .then(res => {
+            .then((res: { json: () => void; }) => {
               return res.json();
             })
             .then((info: Fixrbot.InspectInfo) => {
@@ -218,7 +218,7 @@ export = (app: Application) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(serviceInput)
       })
-        .then(res => {
+        .then((res: { json: () => void; }) => {
           return res.json();
         })
         .then((info: Fixrbot.PatternInfo) => {
