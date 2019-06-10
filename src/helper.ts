@@ -1,7 +1,7 @@
 import { GitHubAPI } from "probot/lib/github";
 
 export namespace Fixrbot {
-  //user application for analysis
+  // user application for analysis
   export interface App {
     url: string;
     user_name: string;
@@ -9,7 +9,7 @@ export namespace Fixrbot {
     repo_name: string;
   }
 
-  //groums produced by backend
+  // groums produced by backend
   export interface Groum {
     groum_key: string;
     method_line_number: number;
@@ -19,7 +19,7 @@ export namespace Fixrbot {
     method_name: string;
   }
 
-  //anomalies produced by backend
+  // anomalies produced by backend
   export interface Anomaly {
     methodName: string;
     packageName: string;
@@ -30,27 +30,27 @@ export namespace Fixrbot {
     id: number;
   }
 
-  //inspect information produced by backend
+  // inspect information produced by backend
   export interface InspectInfo {
     editText: string;
     fileName: string;
     lineNumber: number;
   }
 
-  //examples information produced by backend
+  // examples information produced by backend
   export interface PatternInfo {
     patternCode: string;
     numberOfExamples: number;
   }
 
-  //patterns produced by backend
+  // patterns produced by backend
   export interface Pattern {
     search_results: any[];
     method_names: string[];
     line_number: number;
   }
 
-  //examples produced by backend
+  // examples produced by backend
   export interface Example {
     example_code: string;
     user: string;
@@ -61,26 +61,37 @@ export namespace Fixrbot {
     end_line_number: number;
   }
 
-  //types specified here to use with fixrbot commands
-  export type Inspect = { tag: "inspect"; anomaly_number: number };
-  export type Comment = { tag: "comment"; body: string };
-  export type ShowPattern = { tag: "pattern" };
-  export type ShowExamples = { tag: "example"; max_number?: number };
+  // types specified here to use with fixrbot commands
+  export interface Inspect {
+    tag: "inspect";
+    anomalyNumber: number;
+  }
+  export interface Comment {
+    tag: "comment";
+    body: string;
+  }
+  export interface ShowPattern {
+    tag: "pattern";
+  }
+  export interface ShowExamples {
+    tag: "example";
+    maxNumber?: number;
+  }
   export type FixrbotCommand = Inspect | Comment | ShowPattern | ShowExamples;
 
-  //preconditions: takes a command string, extracts the exact command
-  //postconditions: return a command type as specified above
+  // preconditions: takes a command string, extracts the exact command
+  // postconditions: return a command type as specified above
   export function parse_command(cmd: string): FixrbotCommand | undefined {
     const strs = cmd.split(" ");
-    if (strs[0] != "fixrbot") {
-      //user has made a comment that is not meant for fixrbot, ignore
+    if (strs[0] !== "fixrbot") {
+      // user has made a comment that is not meant for fixrbot, ignore
       return undefined;
     }
 
     switch (strs[1]) {
       case "inspect": {
-        const anomaly_number = parseInt(strs[2]);
-        if (isNaN(anomaly_number)) {
+        const anomalyNumber = parseInt(strs[2], 10);
+        if (isNaN(anomalyNumber)) {
           const comment: Comment = {
             tag: "comment",
             body: `Fixrbot cannot understand command ${strs[2]}\nInspect command must specify valid number.\n`
@@ -89,7 +100,7 @@ export namespace Fixrbot {
         }
         const command: Inspect = {
           tag: "inspect",
-          anomaly_number: anomaly_number
+          anomalyNumber
         };
         return command;
       }
@@ -99,8 +110,8 @@ export namespace Fixrbot {
       }
       case "examples": {
         if (strs[2]) {
-          const max_number = parseInt(strs[2]);
-          if (isNaN(max_number)) {
+          const maxNumber = parseInt(strs[2]);
+          if (isNaN(maxNumber)) {
             const comment: Comment = {
               tag: "comment",
               body: `Fixrbot cannot understand command ${strs[2]}\nOptional max number must specify valid number.\n`
@@ -109,7 +120,7 @@ export namespace Fixrbot {
           }
           const command: ShowExamples = {
             tag: "example",
-            max_number
+            maxNumber
           };
           return command;
         } else {
@@ -127,10 +138,10 @@ export namespace Fixrbot {
     }
   }
 
-  //preconditions: takes list of apps, plus owner and string names to locate
-  //postconditions: returns proper app
+  // preconditions: takes list of apps, plus owner and string names to locate
+  // postconditions: returns proper app
   export function find_repository(
-    apps: Array<App>,
+    apps: App[],
     owner: string,
     name: string
   ): App {
@@ -144,10 +155,10 @@ export namespace Fixrbot {
     }
   }
 
-  //precondtions: currently takes list of groums, later will take list of anomalies
-  //postconditions: returns comment string message specifying list of methods user
-  //might want to inspect
-  export function make_anomalies_msg(anomalies: Array<Anomaly>): string {
+  // precondtions: currently takes list of groums, later will take list of anomalies
+  // postconditions: returns comment string message specifying list of methods user
+  // might want to inspect
+  export function make_anomalies_msg(anomalies: Anomaly[]): string {
     let comment: string = "";
     for (let i = 0; i < anomalies.length; ++i) {
       const anomaly = anomalies[i];
@@ -161,10 +172,10 @@ export namespace Fixrbot {
     return comment;
   }
 
-  //preconditions: takes string specifying method name, number specifying anomaly number, string
-  //specifying object name, and string specifying missing method name
-  //postconditions: currently returns unchanging string
-  //TODO: make this dynamic based on diff provided by backend
+  // preconditions: takes string specifying method name, number specifying anomaly number, string
+  // specifying object name, and string specifying missing method name
+  // postconditions: currently returns unchanging string
+  // TODO: make this dynamic based on diff provided by backend
   export function make_inspect_msg(
     anomaly_number: number,
     body: string,
@@ -185,93 +196,93 @@ Interactions:
 `;
   }
 
-  //loops through comments to find initial method/anomaly number
-  //preconditions: takes strings specifying owner and repo, plus payload and github API object
-  //postconditions: returns body of original comment to extract method/anomaly number to pass
-  //to backend
+  // loops through comments to find initial method/anomaly number
+  // preconditions: takes strings specifying owner and repo, plus payload and github API object
+  // postconditions: returns body of original comment to extract method/anomaly number to pass
+  // to backend
   export async function get_original_comment(
     owner: string,
     repo: string,
     payload: any,
     github: GitHubAPI
   ) {
-    let reply_to_id: number = payload.comment.in_reply_to_id;
+    let replyToId: number = payload.comment.in_reply_to_id;
     while (true) {
-      const reply_to = await github.pullRequests.getComment({
-        owner: owner,
-        repo: repo,
-        comment_id: reply_to_id
+      const replyTo = await github.pullRequests.getComment({
+        owner,
+        repo,
+        comment_id: replyToId
       });
-      if (reply_to.data.in_reply_to_id) {
-        reply_to_id = reply_to.data.in_reply_to_id;
+      if (replyTo.data.in_reply_to_id) {
+        replyToId = replyTo.data.in_reply_to_id;
       } else {
-        return reply_to.data.body;
+        return replyTo.data.body;
       }
     }
   }
 
-  //creates comment reply
-  //preconditions: takes strings specifying owner, repo, and body, number specifying pull number and
-  //reply_to_id, and github API object
-  //postconditions: returns nothing, creates comment
+  // creates comment reply
+  // preconditions: takes strings specifying owner, repo, and body, number specifying pull number and
+  // reply_to_id, and github API object
+  // postconditions: returns nothing, creates comment
   export function reply_to_comment(
-    repo_owner: string,
-    repo_name: string,
-    pull_number: number,
-    reply_to_id: number,
+    repoOwner: string,
+    repoName: string,
+    pullNumber: number,
+    replyToId: number,
     body: string,
     github: GitHubAPI
   ) {
     github.pullRequests.createCommentReply({
-      owner: repo_owner,
-      repo: repo_name,
-      number: pull_number,
-      body: body,
-      in_reply_to: reply_to_id
+      owner: repoOwner,
+      repo: repoName,
+      number: pullNumber,
+      body,
+      in_reply_to: replyToId
     });
   }
 
-  //creates new comment
-  //preconditions: takes strings specifying owner, repo, and body, number specifying pull number and
-  //commit_id, and github API object
-  //postconditions: returns nothing, creates comment
+  // creates new comment
+  // preconditions: takes strings specifying owner, repo, and body, number specifying pull number and
+  // commit_id, and github API object
+  // postconditions: returns nothing, creates comment
   export function create_new_comment(
-    repo_owner: string,
-    repo_name: string,
-    pull_number: number,
-    commit_id: string,
+    repoOwner: string,
+    repoName: string,
+    pullNumber: number,
+    commitId: string,
     body: string,
     github: GitHubAPI
   ) {
     github.pullRequests.createComment({
-      owner: repo_owner,
-      repo: repo_name,
-      number: pull_number,
-      body: body,
-      commit_id: commit_id,
+      owner: repoOwner,
+      repo: repoName,
+      number: pullNumber,
+      body,
+      commit_id: commitId,
       path:
         "Android/iSenseDataWalk/src/edu/uml/cs/isense/comm/RestAPIDbAdapter.java",
       position: 3
     });
   }
 
-  //creates string specifying pattern
-  //preconditions: none currently TODO: integrate with backend, needs to be passed methods
-  //postconditions: returns string specifying pattern
-  export function get_pattern(pattern_code: string, num_examples: number) {
+  // creates string specifying pattern
+  // preconditions: none currently TODO: integrate with backend, needs to be passed methods
+  // postconditions: returns string specifying pattern
+  export function get_pattern(pattern_code: string, numExamples: number) {
     return `\nPattern:
 
 \`\`\`java
 ${pattern_code}
 \`\`\`
 
-Number of examples: ${num_examples}`;
+Number of examples: ${numExamples}`;
   }
 
-  //creates string specifying examples
-  //preconditions: none currently TODO: integrate with backend, needs to be passed everything found in
-  //Example type field
-  //postconditions: returns string listing examples
+  // creates string specifying examples
+  // preconditions: none currently TODO: integrate with backend, needs to be passed everything found in
+  // Example type field
+  // postconditions: returns string listing examples
   export function show_examples() {
     const example_code: string = `@Override
 public void bindView(View view, Context context, Cursor cursor) {
@@ -293,7 +304,7 @@ public void bindView(View view, Context context, Cursor cursor) {
     mAsyncLoader.load(position, path, holder);
 }`;
     const test_example: Example = {
-      example_code: example_code,
+      example_code,
       user: "kaze0",
       repo: "async-loader",
       commit_hash: "94f4c5e658d0d2027f645869ce1a8af066bb7b64",

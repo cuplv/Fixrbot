@@ -19,7 +19,8 @@
     "start": "probot run ./build/index.js",
     "lint": "tslint --project .",
     "test": "jest",
-    "test:watch": "jest --watch --notify --notifyMode=change --coverage"
+    "test:watch": "jest --watch --notify --notifyMode=change --coverage",
+    "prettier": "prettier --write {src,test}/**/*.ts"
   },
   "dependencies": {
     "@types/nock": "^9.3.0",
