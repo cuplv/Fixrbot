@@ -1,28 +1,24 @@
 # Fixrbot
-Fixrbot is a GitHub App that analyses the API usage patterns.
+
+Fixrbot is a GitHub App that analyses the API usage patterns of the Java Programming Language.
 
 [![Build Status](https://travis-ci.org/cuplv/Fixrbot.svg?branch=master)](https://travis-ci.org/cuplv/Fixrbot)
 
-## Setup
+## Build and test locally
 
-```sh
-# Install dependencies
+### Install Dependencies
+
+```shell
 npm install
+```
 
-#If this doesn't initially install node-fetch and probot, install
-npm install node-fetch
-npm i @types/node
-npm install probot
+### Run the bot locally
 
-# Run typescript
+```shell
 npm run build
-
-# Run the bot
 npm start
 ```
-## Deployment
-The bot has been deployed to  https://vast-atoll-23282.herokuapp.com/ with all changes as of May 31 2019.
 
-If you need to redeploy it, the deployment of the bot follows the process discussed in [Deployment | Probot](https://probot.github.io/docs/deployment/).
-These instructions should be sufficient, but if you receive an error trying to deplay that you have both yarn.lock and package-lock.json, you may need to delete it, and if you still have issues, you may need to re-clone the repository. It doesn't currently have a yarn.lock file.
-You should use a .pem file for your private key.
+### Configuring the Github App
+
+You need to a corresponding Github App to use the bot on Github. You can follow either the instructions of [configuring a GitHub app](https://probot.github.io/docs/development/#configuring-a-github-app) automatically or [Manually Configuring a GitHub App](https://probot.github.io/docs/development/#manually-configuring-a-github-app). The important part is to set up the environment variable in `.env` and download the private key from the Github App into the root of this project.
