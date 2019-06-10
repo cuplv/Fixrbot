@@ -23,7 +23,7 @@ export = (app: Application) => {
       repo: "iSENSE-Hardware",
       commitHashes: ["0700782f9d3aa4cb3d4c86c3ccf9dcab13fa3aad"],
       modifiedFiles: [],
-      pullRequestId: 1
+      pullRequestId: pullNumber
     };
 
     // extract anomalies from backend
@@ -75,7 +75,7 @@ export = (app: Application) => {
         repo: "iSENSE-Hardware",
         commitHashes: ["0700782f9d3aa4cb3d4c86c3ccf9dcab13fa3aad"],
         modifiedFiles: [],
-        pullRequestId: 1
+        pullRequestId: pullNumber
       };
 
       fetch("http://localhost:30072/process_graphs_in_pull_request", {

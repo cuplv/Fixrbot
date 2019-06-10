@@ -1,44 +1,27 @@
 // You can import your modules
 // import index from '../src/index'
 
-import nock = require("nock");
-// Requiring our app implementation
-import myProbotApp from "../src";
-import { Probot } from "probot";
-// Requiring our fixtures
 import * as fs from "fs";
+import nock = require("nock");
 import * as path from "path";
+import { Probot } from "probot";
 
+import myProbotApp from "../src";
 import { Fixrbot } from "../src/helper";
 
 nock.disableNetConnect();
 
 const mockMethodNames = ["foo", "bar", "baz"];
 
-const mockMethods = [
+const mockAnomalies: Fixrbot.Anomaly[] = [
   {
-    groum_key: "m1",
-    method_line_number1: 1,
-    package_name: "package",
-    class_name: "Class",
-    source_class_name: "class1",
-    method_name: mockMethodNames[0]
-  },
-  {
-    groum_key: "m2",
-    method_line_number: 2,
-    package_name: "package",
-    class_name: "Class",
-    source_class_name: "sssc",
-    method_name: mockMethodNames[1]
-  },
-  {
-    groum_key: "m3",
-    method_line_number: 3,
-    package_name: "package",
-    class_name: "Class",
-    source_class_name: "sssc",
-    method_name: mockMethodNames[2]
+    methodName: "mock",
+    packageName: "mockpkg",
+    fileName: "mockfile.java",
+    className: "Mock",
+    error: "Error",
+    line: 10,
+    id: 1
   }
 ];
 
@@ -78,7 +61,7 @@ describe("Fixrbot/biggroum integration tests", () => {
     probot.load(myProbotApp);
 
     nock("https://api.github.com")
-      .post("/app/installations/1010584/access_tokens")
+      .post("/app/installations/1131301/access_tokens")
       .reply(200, { token: "test" });
   });
 
@@ -86,27 +69,31 @@ describe("Fixrbot/biggroum integration tests", () => {
     const payload = require("./fixtures/pull_request.opened.json");
 
     nock("https://api.github.com")
-      .get("/repos/LesleyLai/iSENSE-Hardware/pulls/1/commits", (body: any) => {
+      .get("/repos/LesleyLai/iSENSE-Hardware/pulls/2/commits", (body: any) => {
         return true;
       })
       .reply(200);
 
+    const jsonBody = {
+      user: "mmcguinn",
+      repo: "iSENSE-Hardware",
+      commitHashes: ["0700782f9d3aa4cb3d4c86c3ccf9dcab13fa3aad"],
+      modifiedFiles: [],
+      pullRequestId: 2
+    };
+
     nock("http://localhost:30072")
-      .post("/process_graphs_in_pull_request")
-      .reply(200, mockMethods);
+      .post("/process_graphs_in_pull_request", JSON.stringify(jsonBody))
+      .reply(200, mockAnomalies);
 
     const pullRequestCommentBody = {
-      body: `1. **[class1]** Incomplete pattern inside \`${mockMethodNames[0]}\` method
-2. **[sssc]** Incomplete pattern inside \`${mockMethodNames[1]}\` method
-
-Comment \`fixrbot inspect <index of the method>\` to get detailed information about each method.
-`
+      body: Fixrbot.make_anomalies_msg(mockAnomalies)
     };
 
     // Test that a comment is posted
     nock("https://api.github.com")
       .post(
-        "/repos/LesleyLai/iSENSE-Hardware/issues/1/comments",
+        "/repos/LesleyLai/iSENSE-Hardware/issues/2/comments",
         (body: any) => {
           done(expect(body).toMatchObject(pullRequestCommentBody));
           return true;
