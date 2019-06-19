@@ -163,7 +163,7 @@ export namespace Fixrbot {
     for (let i = 0; i < anomalies.length; ++i) {
       const anomaly = anomalies[i];
       comment += i + 1 + ". ";
-      comment += `**[${anomaly.className}]** `;
+      comment += `**[${anomaly.fileName}]** `;
       comment += `Incomplete pattern inside \`${anomaly.methodName}\` method\n`;
     }
     comment += "\n";
@@ -252,6 +252,7 @@ Interactions:
     pullNumber: number,
     commitId: string,
     body: string,
+    path: string,
     github: GitHubAPI
   ) {
     github.pullRequests.createComment({
@@ -260,8 +261,7 @@ Interactions:
       number: pullNumber,
       body,
       commit_id: commitId,
-      path:
-        "Android/iSenseDataWalk/src/edu/uml/cs/isense/comm/RestAPIDbAdapter.java",
+      path: path,
       position: 3
     });
   }
