@@ -159,16 +159,16 @@ export namespace Fixrbot {
   // postconditions: returns comment string message specifying list of methods user
   // might want to inspect
   export function make_anomalies_msg(anomalies: Anomaly[]): string {
-    let comment: string = "";
+    let comment: string = "There are some anomalies in your code:\n";
     for (let i = 0; i < anomalies.length; ++i) {
       const anomaly = anomalies[i];
       comment += i + 1 + ". ";
       comment += `**[${anomaly.fileName}]** `;
-      comment += `Incomplete pattern inside \`${anomaly.methodName}\` method\n`;
+      comment += `in method \`${anomaly.methodName}\` at line \`${anomaly.line}\`\n`;
     }
     comment += "\n";
     comment +=
-      "Comment `fixrbot inspect <index of the method>` to get detailed information about each method.\n";
+      "Comment `fixrbot inspect <index of the anomaly>` to get detailed information about each anomaly.\n";
     return comment;
   }
 
@@ -253,6 +253,7 @@ Interactions:
     commitId: string,
     body: string,
     path: string,
+    lineNumber: number,
     github: GitHubAPI
   ) {
     github.pullRequests.createComment({
@@ -262,7 +263,7 @@ Interactions:
       body,
       commit_id: commitId,
       path: path,
-      position: 3
+      position: lineNumber
     });
   }
 

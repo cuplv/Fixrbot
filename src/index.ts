@@ -100,46 +100,49 @@ export = (app: Application) => {
             commitId,
             markdown,
             info.fileName,
+            0,
             context.github
           );
         });
-    } else if ((command as Fixrbot.ShowPattern).tag == "pattern") {
-      app.log("Processing pattern --- ass issue command");
-      const body =
-        "Fixrbot expects `inspect` command before `pattern` command\n";
-      Fixrbot.create_new_comment(
-        repoOwner,
-        repoName,
-        pullNumber,
-        commitId,
-        body,
-        "",
-        context.github
-      );
-    } else if ((command as Fixrbot.ShowExamples).tag == "example") {
-      const body =
-        "Fixrbot expects `inspect` command before `examples` command\n";
-      Fixrbot.create_new_comment(
-        repoOwner,
-        repoName,
-        pullNumber,
-        commitId,
-        body,
-        "",
-        context.github
-      );
-    } else if ((command as Fixrbot.Comment).tag == "comment") {
-      const body = (command as Fixrbot.Comment).body;
-      Fixrbot.create_new_comment(
-        repoOwner,
-        repoName,
-        pullNumber,
-        commitId,
-        body,
-        "",
-        context.github
-      );
     }
+    // else if ((command as Fixrbot.ShowPattern).tag == "pattern") {
+    //       app.log("Processing pattern --- ass issue command");
+    //       const body =
+    //         "Fixrbot expects `inspect` command before `pattern` command\n";
+    //       Fixrbot.create_new_comment(
+    //         repoOwner,
+    //         repoName,
+    //         pullNumber,
+    //         commitId,
+    //         body,
+    //         "",
+    //         0,
+    //         context.github
+    //       );
+    //     } else if ((command as Fixrbot.ShowExamples).tag == "example") {
+    //       const body =
+    //         "Fixrbot expects `inspect` command before `examples` command\n";
+    //       Fixrbot.create_new_comment(
+    //         repoOwner,
+    //         repoName,
+    //         pullNumber,
+    //         commitId,
+    //         body,
+    //         "",
+    //         context.github
+    //       );
+    //     } else if ((command as Fixrbot.Comment).tag == "comment") {
+    //       const body = (command as Fixrbot.Comment).body;
+    //       Fixrbot.create_new_comment(
+    //         repoOwner,
+    //         repoName,
+    //         pullNumber,
+    //         commitId,
+    //         body,
+    //         "",
+    //         context.github
+    //       );
+    //     }
   });
 
   // react to user review comment
