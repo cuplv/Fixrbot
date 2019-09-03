@@ -164,7 +164,7 @@ export namespace Fixrbot {
       const anomaly = anomalies[i];
       comment += i + 1 + ". ";
       comment += `**[${anomaly.fileName}]** `;
-      comment += `in method \`${anomaly.methodName}\` at line \`${anomaly.line}\`\n`;
+      comment += `--- \`${anomaly.error}\` in method \`${anomaly.methodName}\` at line \`${anomaly.line}\`\n`;
     }
     comment += "\n";
     comment +=
@@ -192,8 +192,8 @@ ${editText}
 Interactions:
 
 * \`fixrbot pattern\`: Gets the detailed information of the pattern
-* \`fixrbot examples\`: Gets the example code of the pattern
 `;
+    //#  \`fixrbot examples\`: Gets the example code of the pattern
   }
 
   // loops through comments to find initial method/anomaly number
