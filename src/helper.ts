@@ -159,16 +159,16 @@ export namespace Fixrbot {
   // postconditions: returns comment string message specifying list of methods user
   // might want to inspect
   export function make_anomalies_msg(anomalies: Anomaly[]): string {
-    let comment: string = "";
+    let comment: string = "There are some anomalies in your code:\n";
     for (let i = 0; i < anomalies.length; ++i) {
       const anomaly = anomalies[i];
       comment += i + 1 + ". ";
-      comment += `**[${anomaly.className}]** `;
-      comment += `Incomplete pattern inside \`${anomaly.methodName}\` method\n`;
+      comment += `**[${anomaly.fileName}]** `;
+      comment += `--- \`${anomaly.error}\` in method \`${anomaly.methodName}\` at line \`${anomaly.line}\`\n`;
     }
     comment += "\n";
     comment +=
-      "Comment `fixrbot inspect <index of the method>` to get detailed information about each method.\n";
+      "Comment `fixrbot inspect <index of the anomaly>` to get detailed information about each anomaly.\n";
     return comment;
   }
 
@@ -192,8 +192,8 @@ ${editText}
 Interactions:
 
 * \`fixrbot pattern\`: Gets the detailed information of the pattern
-* \`fixrbot examples\`: Gets the example code of the pattern
 `;
+    //#  \`fixrbot examples\`: Gets the example code of the pattern
   }
 
   // loops through comments to find initial method/anomaly number
@@ -252,6 +252,8 @@ Interactions:
     pullNumber: number,
     commitId: string,
     body: string,
+    path: string,
+    lineNumber: number,
     github: GitHubAPI
   ) {
     github.pullRequests.createComment({
@@ -260,9 +262,8 @@ Interactions:
       number: pullNumber,
       body,
       commit_id: commitId,
-      path:
-        "Android/iSenseDataWalk/src/edu/uml/cs/isense/comm/RestAPIDbAdapter.java",
-      position: 3
+      path: path,
+      position: lineNumber
     });
   }
 
